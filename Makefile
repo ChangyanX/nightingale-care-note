@@ -1,7 +1,7 @@
 PNPM ?= pnpm
 UV ?= uv
 
-.PHONY: install dev-web dev-api test test-api lint typecheck db-start db-stop db-reset seed-hosted smoke-llm release-status release-check
+.PHONY: install dev-web dev-api test test-api lint typecheck generate-api db-start db-stop db-reset seed-hosted smoke-llm release-status release-check
 
 install:
 	$(PNPM) install
@@ -26,6 +26,9 @@ typecheck:
 	$(PNPM) typecheck:web
 	cd services/backend && $(UV) run mypy app
 
+generate-api:
+	$(PNPM) generate:api
+
 db-start:
 	pnpm exec supabase start
 
@@ -41,6 +44,12 @@ seed-hosted:
 
 smoke-llm:
 	cd services/backend && $(UV) run python -m scripts.run_groq_smoke
+
+smoke-llm-nurse:
+	cd services/backend && $(UV) run python -m scripts.run_groq_smoke --interaction-type nurse_consult
+
+smoke-llm-patient:
+	cd services/backend && $(UV) run python -m scripts.run_groq_smoke --interaction-type ai_patient_session
 
 release-status:
 	cd services/backend && $(UV) run python -m scripts.release_audit

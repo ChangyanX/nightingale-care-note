@@ -1,5 +1,10 @@
 # Phase 4 Task Breakdown — AI Pipeline
 
+All Phase 4 optional deliverables have local implementation paths and are
+mapped in the [Phase 1–4 optional-deliverables audit](../phase-1-4-optional-deliverables.md).
+The second genuine interaction remains a credential/runtime evidence gate; it
+is never represented as a live pass until actually executed.
+
 Phase 4 adds one genuine AI-scribe path without allowing model output to bypass
 redaction, validation, provenance, authorization, or human review. The worker is
 a separate process in the existing Python backend, not a new microservice.
@@ -11,9 +16,9 @@ a separate process in the existing Python backend, not a new microservice.
 | [P4-T03](task-03-structured-scribe-contract.md) | Structured scribe contract | Implemented locally | 1 h | 25 min | T01 | Strict summary/fact/highlight validation |
 | [P4-T04](task-04-provider-gateway-and-worker.md) | Provider gateway and worker | Groq adapter/worker core implemented; live run pending key | 1.5 h | 45 min | T02-T03 | Redacted genuine invocation with retry-safe worker |
 | [P4-T05](task-05-ai-entry-and-provenance-persistence.md) | AI entry and provenance persistence | Pending | 1 h | 30 min | T03-T04, Phase 3 schema | Atomic system entry and exact source linkage |
-| [P4-T06](task-06-highlight-review-and-explainability.md) | Highlight review and explainability | Pending | 1 h | 25 min | T05, Phase 3 highlights | Exact suggestions with fast clinician review |
-| [P4-T07](task-07-adaptive-importance-ranking.md) | Adaptive importance ranking | Pure domain logic implemented; persistence/API pending | 1.25 h | 35 min | T06 | Bounded, resettable feedback weights and safety floor |
-| [P4-T08](task-08-required-tests-and-handoff.md) | Required tests and handoff | Pending | 1 h | 10 min | T01-T07 | Genuine-run, idempotency, provenance, and learning evidence |
+| [P4-T06](task-06-highlight-review-and-explainability.md) | Highlight review and explainability | Implemented locally; hosted walkthrough pending | 1 h | 25 min | T05, Phase 3 highlights | Exact suggestions with fast clinician review |
+| [P4-T07](task-07-adaptive-importance-ranking.md) | Adaptive importance ranking | Implemented end-to-end locally; hosted walkthrough pending | 1.25 h | 35 min | T06 | Bounded, resettable feedback weights and safety floor |
+| [P4-T08](task-08-required-tests-and-handoff.md) | Required tests and handoff | Offline gates pass; genuine/hosted evidence pending | 1 h | 10 min | T01-T07 | Genuine-run, idempotency, provenance, and learning evidence |
 
 **Full Phase 4 estimate:** approximately 8-9 hours  
 **Critical-path allocation:** 3.5 hours

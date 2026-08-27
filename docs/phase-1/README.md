@@ -1,5 +1,8 @@
 # Phase 1 Task Breakdown — Foundation
 
+All Phase 1 optional deliverables are implemented and mapped in the
+[Phase 1–4 optional-deliverables audit](../phase-1-4-optional-deliverables.md).
+
 Phase 1 establishes a runnable and testable security foundation. Tasks are ordered by dependency and should be completed sequentially unless a task explicitly permits parallel work.
 
 | ID | Task | Status | Full estimate | 16-hour path | Depends on | Exit evidence |

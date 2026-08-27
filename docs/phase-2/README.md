@@ -1,5 +1,8 @@
 # Phase 2 Task Breakdown — Core Patient Experience
 
+All Phase 2 optional deliverables are implemented and mapped in the
+[Phase 1–4 optional-deliverables audit](../phase-1-4-optional-deliverables.md).
+
 Phase 2 turns the security foundation into the primary reviewer-facing product:
 a clinic-scoped patient selector, an actionable Glance View, and a longitudinal
 timeline. Tasks are ordered by dependency. Database and API tasks may be
@@ -14,8 +17,8 @@ completion still require the hosted project.
 | [P2-T04](task-04-web-auth-and-data-client.md) | Web authentication and API client | Implemented; hosted Auth pending | 1 h | 20 min | Phase 1 Auth, T03 contracts | Real role-scoped session reaches FastAPI |
 | [P2-T05](task-05-clinical-shell-and-patient-selector.md) | Clinical shell and patient selector | Implemented; role walkthrough pending | 1 h | 20 min | T03, T04 | Clinic-scoped navigation to a patient page |
 | [P2-T06](task-06-glance-view-and-timeline.md) | Glance View and timeline | Implemented; live visual QA pending | 2 h | 50 min | T03-T05 | Primary patient is understandable in under ten seconds |
-| [P2-T07](task-07-notes-and-care-task-actions.md) | Manual notes and task actions | Pending | 1 h | 20 min | T02-T06 | Role-permitted mutations appear in the UI |
-| [P2-T08](task-08-realtime-states-and-verification.md) | Realtime, states, and verification | Pending | 1-1.5 h | 15 min | T05-T07 | Two-session updates and complete visual states |
+| [P2-T07](task-07-notes-and-care-task-actions.md) | Manual notes and task actions | Task actions implemented; manual-note UI pending | 1 h | 20 min | T02-T06 | Role-permitted mutations appear in the UI |
+| [P2-T08](task-08-realtime-states-and-verification.md) | Realtime, states, and verification | UI states implemented; hosted two-session evidence pending | 1-1.5 h | 15 min | T05-T07 | Two-session updates and complete visual states |
 
 **Full Phase 2 estimate:** approximately 8-9 hours  
 **Critical-path allocation:** 3 hours

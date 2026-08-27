@@ -94,7 +94,8 @@ values
   ('60000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 'ai_patient_session', 'ai-session-001', '2026-08-26T08:00:00+08:00', null, '{"synthetic":true,"session_id":"ai-session-001"}'),
   ('60000000-0000-0000-0000-000000000006', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 'manual', 'patient-instruction-001', '2026-08-24T09:40:00+08:00', '20000000-0000-0000-0000-000000000003', '{"synthetic":true}'),
   ('60000000-0000-0000-0000-000000000007', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 'manual', 'patient-insight-001', '2026-08-26T07:50:00+08:00', '20000000-0000-0000-0000-000000000004', '{"synthetic":true}'),
-  ('60000000-0000-0000-0000-000000000008', '10000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000003', 'manual', 'clinic-b-note-001', '2026-08-25T11:00:00+08:00', '20000000-0000-0000-0000-000000000005', '{"synthetic":true}')
+  ('60000000-0000-0000-0000-000000000008', '10000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000003', 'manual', 'clinic-b-note-001', '2026-08-25T11:00:00+08:00', '20000000-0000-0000-0000-000000000005', '{"synthetic":true}'),
+  ('60000000-0000-0000-0000-000000000009', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 'manual', 'staff-note-002', '2026-08-25T16:00:00+08:00', '20000000-0000-0000-0000-000000000002', '{"synthetic":true,"concern_rank":2}')
 on conflict (id) do nothing;
 
 insert into public.entries (
@@ -109,7 +110,8 @@ values
   ('70000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', null, 'system', 'ai_patient_session_summary', 'internal', 'AI-patient session: patient asks whether the new nighttime symptoms require an earlier review.', 'AI-patient session: patient asks whether the new nighttime symptoms require an earlier review.', '60000000-0000-0000-0000-000000000005', '2026-08-26T08:00:00+08:00'),
   ('70000000-0000-0000-0000-000000000006', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000003', 'clinician', 'patient_instruction', 'patient_facing', 'Record peak-flow readings each morning and evening for seven days. Contact the clinic sooner if breathing worsens.', 'Record peak-flow readings each morning and evening for seven days. Contact the clinic sooner if breathing worsens.', '60000000-0000-0000-0000-000000000006', '2026-08-24T09:40:00+08:00'),
   ('70000000-0000-0000-0000-000000000007', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000004', 'patient', 'patient_insight', 'internal', 'The cough woke me twice last night and seems worse when the room is cold.', 'The cough woke me twice last night and seems worse when the room is cold.', '60000000-0000-0000-0000-000000000007', '2026-08-26T07:50:00+08:00'),
-  ('70000000-0000-0000-0000-000000000008', '10000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000003', '50000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000005', 'staff', 'staff_note', 'internal', 'Synthetic Clinic B note used to prove tenant isolation.', 'Synthetic Clinic B note used to prove tenant isolation.', '60000000-0000-0000-0000-000000000008', '2026-08-25T11:00:00+08:00')
+  ('70000000-0000-0000-0000-000000000008', '10000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000003', '50000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000005', 'staff', 'staff_note', 'internal', 'Synthetic Clinic B note used to prove tenant isolation.', 'Synthetic Clinic B note used to prove tenant isolation.', '60000000-0000-0000-0000-000000000008', '2026-08-25T11:00:00+08:00'),
+  ('70000000-0000-0000-0000-000000000009', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', 'staff', 'staff_note', 'internal', 'Secondary concern: sleep disruption is affecting daytime concentration, but there are no synthetic red-flag symptoms.', 'Secondary concern: sleep disruption is affecting daytime concentration, but there are no synthetic red-flag symptoms.', '60000000-0000-0000-0000-000000000009', '2026-08-25T16:00:00+08:00')
 on conflict (id) do nothing;
 
 insert into public.entry_versions (
@@ -281,7 +283,7 @@ on conflict (id) do nothing;
 
 insert into public.care_tasks (
   id, clinic_id, patient_id, source_entry_id, title, assigned_to, created_by,
-  status, priority, due_at, completed_at
+  status, priority, category, patient_visible, due_at, completed_at
 )
 values
   (
@@ -294,6 +296,8 @@ values
     '20000000-0000-0000-0000-000000000002',
     'open',
     'high',
+    'monitoring',
+    true,
     '2026-08-31T17:00:00+08:00',
     null
   ),
@@ -307,6 +311,8 @@ values
     '20000000-0000-0000-0000-000000000003',
     'completed',
     'normal',
+    'clinical_review',
+    false,
     '2026-08-25T17:00:00+08:00',
     '2026-08-25T10:15:00+08:00'
   )
@@ -315,6 +321,8 @@ on conflict (id) do update set
   assigned_to = excluded.assigned_to,
   status = excluded.status,
   priority = excluded.priority,
+  category = excluded.category,
+  patient_visible = excluded.patient_visible,
   due_at = excluded.due_at,
   completed_at = excluded.completed_at;
 

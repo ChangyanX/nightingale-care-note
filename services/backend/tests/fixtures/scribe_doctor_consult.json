@@ -2,6 +2,8 @@
   "schema_version": "1.0",
   "interaction_type": "doctor_consult",
   "summary": "Nocturnal cough persists. Inhaler technique review and a seven-day peak-flow diary were agreed.",
+  "source_language": "en",
+  "model_confidence": 0.91,
   "facts": [
     {
       "category": "symptom",
@@ -9,6 +11,7 @@
       "source_quote": "the cough is still waking me at night"
     }
   ],
+  "medications": [],
   "open_questions": [
     "Does the symptom pattern warrant an earlier review?"
   ],

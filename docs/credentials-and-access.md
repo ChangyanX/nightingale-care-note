@@ -97,6 +97,33 @@ At runtime:
 5. PostgreSQL RLS evaluates `auth.uid()` and the user's memberships. The API
    cannot silently broaden the caller's permissions.
 
+### Browser-to-database boundary
+
+The browser has no direct clinical Data API, database RPC, Storage, or Edge
+Function access. All patient, timeline, task, comment, highlight, AI-job, and
+preference reads and mutations go through FastAPI.
+
+The Supabase browser client is intentionally retained for two narrow purposes:
+
+1. **Auth:** sign in, refresh the caller's short-lived session, and sign out.
+2. **Realtime invalidation:** receive an RLS-authorized change signal and then
+   refetch the resource through FastAPI. The application does not treat the
+   Realtime row payload as its clinical data source.
+
+The publishable key is designed to be public and is not a database password.
+RLS still protects the Realtime subscription. The service-role key and direct
+database connection string must never enter `NEXT_PUBLIC_*` configuration.
+
+Run the enforced boundary check with:
+
+```bash
+npm --prefix apps/web run check:supabase-boundary
+```
+
+It rejects raw Supabase SDK imports and browser calls to `.from(...)`,
+`.rpc(...)`, Storage, or Edge Functions. If the product later needs one of
+those capabilities, add a FastAPI endpoint instead of weakening the check.
+
 Do not manually copy an access token into ordinary application code. The
 Supabase client obtains and refreshes it. Short-lived tokens are exported only
 for the opt-in live RBAC test described in `supabase-setup.md`.

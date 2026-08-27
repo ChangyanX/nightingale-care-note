@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import json
 
@@ -13,8 +14,26 @@ Doctor: Please continue the prescribed inhaler and record a seven-day peak-flow 
 Patient: Should I arrange an earlier review if the nighttime cough becomes worse?
 Doctor: Yes, contact the clinic if symptoms worsen or you develop breathing difficulty."""
 
+_SYNTHETIC_NURSE_TRANSCRIPT = """Patient Name: Parker Patient
+Nurse: Please show me how you use the inhaler.
+Patient: I breathe in before pressing the canister.
+Nurse: Press first, then breathe in slowly. You have now demonstrated the steps correctly.
+Patient: I will practise twice daily and record any difficulty."""
 
-async def run() -> None:
+_SYNTHETIC_PATIENT_SESSION = """Patient Name: Parker Patient
+Assistant: What has changed since your consultation?
+Patient: My cough has been worse at night and woke me twice.
+Assistant: Is there anything you want the clinic to answer?
+Patient: Should the planned review be brought forward?"""
+
+_TRANSCRIPTS = {
+    ScribeInteractionType.DOCTOR_CONSULT: _SYNTHETIC_TRANSCRIPT,
+    ScribeInteractionType.NURSE_CONSULT: _SYNTHETIC_NURSE_TRANSCRIPT,
+    ScribeInteractionType.AI_PATIENT_SESSION: _SYNTHETIC_PATIENT_SESSION,
+}
+
+
+async def run(interaction_type: ScribeInteractionType) -> None:
     settings = get_worker_settings()
     if settings.llm_provider != "groq":
         raise SystemExit("LLM_PROVIDER must be groq for this smoke command")
@@ -22,7 +41,7 @@ async def run() -> None:
         raise SystemExit("LLM_API_KEY is not configured in the ignored root .env")
 
     redaction = redact_for_llm(
-        _SYNTHETIC_TRANSCRIPT,
+        _TRANSCRIPTS[interaction_type],
         known_names=("Parker Patient",),
     )
     provider = GroqScribeProvider(
@@ -32,7 +51,7 @@ async def run() -> None:
     )
     result = await provider.generate(
         redaction,
-        interaction_type=ScribeInteractionType.DOCTOR_CONSULT,
+        interaction_type=interaction_type,
     )
     print(
         json.dumps(
@@ -56,4 +75,11 @@ async def run() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(run())
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--interaction-type",
+        choices=[item.value for item in ScribeInteractionType],
+        default=ScribeInteractionType.DOCTOR_CONSULT.value,
+    )
+    arguments = parser.parse_args()
+    asyncio.run(run(ScribeInteractionType(arguments.interaction_type)))

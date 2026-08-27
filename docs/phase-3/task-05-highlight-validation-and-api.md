@@ -1,6 +1,6 @@
 # P3-T05 — Highlight Validation and API
 
-**Status:** Pending
+**Status:** Implemented locally; hosted mutation walkthrough pending
 **Full estimate:** 1.5 hours
 **16-hour path:** 35 minutes
 **Dependencies:** P3-T01, P3-T02

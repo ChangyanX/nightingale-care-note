@@ -6,17 +6,24 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
-    "typecheck": "tsc --noEmit --incremental false"
+    "lint": "eslint . && npm run check:supabase-boundary",
+    "check:supabase-boundary": "node scripts/check-supabase-boundary.mjs",
+    "typecheck": "tsc --noEmit --incremental false",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots"
   },
   "dependencies": {
+    "@nightingale/design-tokens": "workspace:*",
+    "@tanstack/react-query": "latest",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "next": "latest",
+    "openapi-fetch": "latest",
     "react": "latest",
     "react-dom": "latest"
   },
   "devDependencies": {
+    "@playwright/test": "latest",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",

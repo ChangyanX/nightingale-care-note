@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 from uuid import UUID
 
 from app.domain.redaction import RedactionError, VerifiedRedaction, redact_for_llm
@@ -49,6 +49,11 @@ class WorkerBackend(Protocol):
     ) -> None: ...
 
 
+@runtime_checkable
+class ProgressBackend(Protocol):
+    async def progress(self, job: ScribeJob, event: str) -> None: ...
+
+
 class ScribeWorker:
     def __init__(self, backend: WorkerBackend, provider: ScribeProvider) -> None:
         self.backend = backend
@@ -66,12 +71,15 @@ class ScribeWorker:
         try:
             source = await self.backend.load_source(job)
             redaction = redact_for_llm(source.text, known_names=source.known_names)
+            await self._progress(job, "generating")
             result = await self.provider.generate(
                 redaction,
                 interaction_type=job.interaction_type,
             )
             if result.output.interaction_type is not job.interaction_type:
                 raise ProviderError("interaction_type_mismatch", retryable=False)
+            await self._progress(job, "validating")
+            await self._progress(job, "persisting")
             await self.backend.complete(job, redaction, result)
         except RedactionError:
             await self._fail(job, "redaction_failed", retryable=False)
@@ -86,6 +94,10 @@ class ScribeWorker:
                 extra={"job_id": str(job.id), "model": result.model},
             )
         return True
+
+    async def _progress(self, job: ScribeJob, event: str) -> None:
+        if isinstance(self.backend, ProgressBackend):
+            await self.backend.progress(job, event)
 
     async def _fail(self, job: ScribeJob, safe_error_code: str, *, retryable: bool) -> None:
         retry_delay_seconds = min(300, 5 * (2 ** max(0, job.attempt_count - 1)))

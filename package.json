@@ -7,12 +7,16 @@
     "node": ">=20.9"
   },
   "scripts": {
+    "generate:openapi": "cd services/backend && uv run python -m scripts.export_openapi ../../docs/openapi.json",
+    "generate:api": "pnpm generate:openapi && openapi-typescript docs/openapi.json -o apps/web/lib/api/openapi.generated.ts",
     "dev:web": "pnpm --filter @nightingale/web dev",
     "build:web": "pnpm --filter @nightingale/web build",
     "lint:web": "pnpm --filter @nightingale/web lint",
-    "typecheck:web": "pnpm --filter @nightingale/web typecheck"
+    "typecheck:web": "pnpm --filter @nightingale/web typecheck",
+    "test:visual": "pnpm --filter @nightingale/web test:visual"
   },
   "devDependencies": {
+    "openapi-typescript": "latest",
     "supabase": "latest"
   }
 }

@@ -1,0 +1,31 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: local
+    hooks:
+      - id: backend-ruff
+        name: backend ruff
+        entry: uv run --directory services/backend ruff check
+        language: system
+        types: [python]
+      - id: backend-mypy
+        name: backend mypy
+        entry: uv run --directory services/backend mypy app
+        language: system
+        pass_filenames: false
+      - id: web-typecheck
+        name: web typecheck
+        entry: pnpm typecheck:web
+        language: system
+        pass_filenames: false
+      - id: web-supabase-boundary
+        name: web Supabase boundary
+        entry: pnpm --dir apps/web check:supabase-boundary
+        language: system
+        pass_filenames: false

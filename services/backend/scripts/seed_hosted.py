@@ -328,6 +328,15 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             users["STAFF_B"],
             "2026-08-25T11:00:00+08:00",
         ),
+        (
+            "60000000-0000-0000-0000-000000000009",
+            CLINIC_A_ID,
+            PATIENT_A_ID,
+            "manual",
+            "staff-note-002",
+            users["STAFF_A"],
+            "2026-08-25T16:00:00+08:00",
+        ),
     ]
     client.upsert(
         "source_records",
@@ -465,6 +474,20 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "60000000-0000-0000-0000-000000000008",
             "2026-08-25T11:00:00+08:00",
         ),
+        (
+            "70000000-0000-0000-0000-000000000009",
+            CLINIC_A_ID,
+            PATIENT_A_ID,
+            CARE_NOTE_A_ID,
+            users["STAFF_A"],
+            "staff",
+            "staff_note",
+            "internal",
+            "Secondary concern: sleep disruption is affecting daytime concentration, "
+            "but there are no synthetic red-flag symptoms.",
+            "60000000-0000-0000-0000-000000000009",
+            "2026-08-25T16:00:00+08:00",
+        ),
     ]
     entry_rows = [
         {
@@ -571,7 +594,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
         "comment_id,mentioned_profile_id",
     )
     entries_by_id = {str(row["id"]): row for row in entry_rows}
-    highlight_specs = [
+    highlight_specs: list[dict[str, Any]] = [
         {
             "id": "d0000000-0000-0000-0000-000000000001",
             "entry_id": "70000000-0000-0000-0000-000000000003",
@@ -630,6 +653,8 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
                 "created_by": users["STAFF_A"],
                 "status": "open",
                 "priority": "high",
+                "category": "monitoring",
+                "patient_visible": True,
                 "due_at": "2026-08-31T17:00:00+08:00",
                 "completed_at": None,
             },
@@ -643,6 +668,8 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
                 "created_by": users["CLINICIAN_A"],
                 "status": "completed",
                 "priority": "normal",
+                "category": "clinical_review",
+                "patient_visible": False,
                 "due_at": "2026-08-25T17:00:00+08:00",
                 "completed_at": "2026-08-25T10:15:00+08:00",
             },
@@ -672,7 +699,7 @@ def main() -> None:
     parser.add_argument("--credential-file", type=Path, default=DEFAULT_CREDENTIAL_FILE)
     args = parser.parse_args()
 
-    settings = HostedSeedSettings()  # type: ignore[call-arg]
+    settings = HostedSeedSettings()
     actual_ref = project_ref_from_url(settings.supabase_url)
     if args.project_ref != actual_ref:
         raise SystemExit(

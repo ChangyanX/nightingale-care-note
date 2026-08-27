@@ -1,5 +1,9 @@
 # Build Phases
 
+The consolidated [Phase 1–4 optional-deliverables audit](phase-1-4-optional-deliverables.md)
+maps every optional item to implementation evidence and separates local
+completion from hosted/live-provider verification.
+
 This folder turns the project blueprint into five implementation milestones. Work through the phases in order; each phase reduces risk for the next one.
 
 | Phase | Focus | Estimate | Exit condition |

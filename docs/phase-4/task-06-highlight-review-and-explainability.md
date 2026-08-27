@@ -1,6 +1,6 @@
 # P4-T06 — Highlight Review and Explainability
 
-**Status:** Pending  
+**Status:** Implemented locally; hosted walkthrough pending
 **Full estimate:** 1 hour  
 **16-hour path:** 25 minutes  
 **Dependencies:** P4-T05, Phase 3 highlights
@@ -37,12 +37,12 @@ reject suggestions quickly while keeping AI and confirmed states unmistakable.
 
 ## Acceptance criteria
 
-- [ ] Exact quotes round-trip through Unicode offsets.
-- [ ] Missing and ambiguous quotes are rejected.
-- [ ] Clinician review takes no more than two interactions.
-- [ ] A stale or repeated review cannot create contradictory state.
-- [ ] Exact source navigation works after later source edits.
-- [ ] `test_highlight_provenance.py` passes for manual and AI highlights.
+- [x] Exact quotes round-trip through Unicode offsets.
+- [x] Missing and ambiguous quotes are rejected.
+- [x] Clinician review takes no more than two interactions.
+- [x] A stale or repeated review cannot create contradictory state.
+- [x] Exact source navigation resolves the immutable historical version after later edits.
+- [x] `test_highlight_provenance.py` passes for manual and AI highlights.
 
 ## Done when
 

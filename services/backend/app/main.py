@@ -2,12 +2,13 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.api.collaboration import router as collaboration_router
 from app.api.foundation import router as foundation_router
 from app.api.revisions import router as revisions_router
 from app.api.scribe_jobs import router as scribe_jobs_router
 from app.config import get_settings
 from app.gateway import SupabaseGatewayError
-from app.middleware import RequestIdMiddleware
+from app.middleware import RequestIdMiddleware, StructuredAccessLogMiddleware
 from app.schemas import HealthResponse
 
 settings = get_settings()
@@ -17,15 +18,17 @@ app = FastAPI(
     version="0.1.0",
     description="Server-enforced API for the Nightingale longitudinal Care Note.",
 )
+app.add_middleware(StructuredAccessLogMiddleware)
 app.add_middleware(RequestIdMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
 )
 app.include_router(foundation_router)
+app.include_router(collaboration_router)
 app.include_router(revisions_router)
 app.include_router(scribe_jobs_router)
 

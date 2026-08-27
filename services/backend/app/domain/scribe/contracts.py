@@ -44,11 +44,26 @@ class ProposedHighlight(_StrictContract):
     occurrence_hint: int = Field(ge=-1)
 
 
+class MedicationDetail(_StrictContract):
+    name: BoundedText = Field(max_length=200)
+    dose: BoundedText | None = Field(default=None, max_length=100)
+    route: BoundedText | None = Field(default=None, max_length=100)
+    frequency: BoundedText | None = Field(default=None, max_length=100)
+    change: Literal["started", "continued", "changed", "stopped", "mentioned"]
+    source_quote: BoundedText = Field(max_length=1_000)
+    confidence: float = Field(ge=0, le=1)
+
+
 class ScribeOutput(_StrictContract):
     schema_version: Literal["1.0"]
     interaction_type: ScribeInteractionType = Field(strict=False)
     summary: BoundedText = Field(max_length=4_000)
+    source_language: BoundedText = Field(
+        max_length=35, pattern=r"^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$"
+    )
+    model_confidence: float = Field(ge=0, le=1)
     facts: list[ExtractedFact] = Field(max_length=20)
+    medications: list[MedicationDetail] = Field(max_length=20)
     open_questions: list[BoundedText] = Field(max_length=10)
     actions: list[ProposedAction] = Field(max_length=10)
     highlights: list[ProposedHighlight] = Field(max_length=10)

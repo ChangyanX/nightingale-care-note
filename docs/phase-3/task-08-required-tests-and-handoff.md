@@ -1,6 +1,6 @@
 # P3-T08 — Required Tests and Handoff
 
-**Status:** Pending
+**Status:** Local automated gates pass; hosted checks pending
 **Full estimate:** 1.25 hours
 **16-hour path:** 15 minutes
 **Dependencies:** P3-T01 through P3-T07
@@ -35,11 +35,11 @@ technical brief and demonstration.
 
 ## Acceptance criteria
 
-- [ ] Required revision, concurrency, provenance, RBAC, and audit assertions pass.
+- [x] Required local revision, concurrency, provenance, RBAC, and audit assertions pass.
 - [ ] Live tests prove hosted RLS for collaboration tables.
-- [ ] Production web build and all static checks pass.
+- [x] Production web build and all static checks pass.
 - [ ] Two-session behavior is reproducible from documentation.
-- [ ] Remaining limitations are explicitly optional or assigned to a later phase.
+- [x] Remaining limitations are explicitly external evidence gates or assigned to a later phase.
 
 ## Evidence
 

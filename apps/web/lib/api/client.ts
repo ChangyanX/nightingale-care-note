@@ -56,3 +56,21 @@ export async function apiPost<T>(
   }
   return (await response.json()) as T;
 }
+
+export async function apiPatch<T>(
+  path: string,
+  accessToken: string,
+  body: unknown,
+): Promise<T> {
+  const { apiUrl } = getPublicEnvironment();
+  const response = await fetch(`${apiUrl}${path}`, {
+    method: "PATCH",
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw new ApiError(response.status, "The update could not be completed.");
+  return (await response.json()) as T;
+}

@@ -1,6 +1,6 @@
 # P3-T06 — Provenance and Review UI
 
-**Status:** Pending
+**Status:** Implemented locally; hosted source-navigation evidence pending
 **Full estimate:** 1 hour
 **16-hour path:** 25 minutes
 **Dependencies:** P3-T03 through P3-T05

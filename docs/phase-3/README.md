@@ -1,5 +1,8 @@
 # Phase 3 Task Breakdown — Trust and Collaboration
 
+All Phase 3 optional deliverables are implemented and mapped in the
+[Phase 1–4 optional-deliverables audit](../phase-1-4-optional-deliverables.md).
+
 Phase 3 makes the shared Care Note auditable, conflict-safe, collaborative, and
 source-verifiable. It builds on Phase 1 ownership/version primitives and the
 Phase 2 patient experience. Schema work can begin independently, but the phase
@@ -11,11 +14,11 @@ paths are verified.
 | [P3-T01](task-01-collaboration-and-provenance-schema.md) | Collaboration and provenance schema | SQL implemented; apply pending | 1.25 h | 25 min | Phase 1 schema, Phase 2 tasks | RLS-secured threads, mentions, and exact-source highlights |
 | [P3-T02](task-02-revision-revert-and-concurrency.md) | Revision, revert, and concurrency logic | SQL implemented; live concurrency pending | 1.5 h | 35 min | T01 | Immutable history, transactional revert, deterministic conflict |
 | [P3-T03](task-03-revision-api-and-viewer.md) | Revision API and viewer | Implemented locally; hosted walkthrough pending | 1 h | 25 min | T02 | Version list, changes-since comparison, and confirmed revert UI |
-| [P3-T04](task-04-comments-mentions-and-assignments.md) | Comments, mentions, and assignments | Pending | 1.5 h | 30 min | T01, Phase 2 task mutation | Thread lifecycle and clinic-valid mentions/assignees |
-| [P3-T05](task-05-highlight-validation-and-api.md) | Highlight validation and API | Pending | 1.5 h | 35 min | T01, T02 | Exact historical span validation and review mutations |
-| [P3-T06](task-06-provenance-and-review-ui.md) | Provenance and review UI | Pending | 1 h | 25 min | T03-T05 | Accept/reject and exact source navigation |
-| [P3-T07](task-07-audit-and-realtime-collaboration.md) | Audit and Realtime collaboration | Pending | 1 h | 20 min | T02-T06 | Live comments/tasks/highlight decisions with safe audit trail |
-| [P3-T08](task-08-required-tests-and-handoff.md) | Required tests and handoff | Pending | 1.25 h | 15 min | T01-T07 | Revision, provenance, concurrency, RBAC, and two-session evidence |
+| [P3-T04](task-04-comments-mentions-and-assignments.md) | Comments, mentions, and assignments | Implemented locally; hosted role walkthrough pending | 1.5 h | 30 min | T01, Phase 2 task mutation | Thread lifecycle and clinic-valid mentions/assignees |
+| [P3-T05](task-05-highlight-validation-and-api.md) | Highlight validation and API | Implemented locally; hosted mutation walkthrough pending | 1.5 h | 35 min | T01, T02 | Exact historical span validation and review mutations |
+| [P3-T06](task-06-provenance-and-review-ui.md) | Provenance and review UI | Implemented locally; hosted source-navigation evidence pending | 1 h | 25 min | T03-T05 | Accept/reject and exact source navigation |
+| [P3-T07](task-07-audit-and-realtime-collaboration.md) | Audit and Realtime collaboration | Implemented locally; two-session evidence pending | 1 h | 20 min | T02-T06 | Live comments/tasks/highlight decisions with safe audit trail |
+| [P3-T08](task-08-required-tests-and-handoff.md) | Required tests and handoff | Local automated gates pass; hosted checks pending | 1.25 h | 15 min | T01-T07 | Revision, provenance, concurrency, RBAC, and two-session evidence |
 
 **Full Phase 3 estimate:** approximately 9-10 hours
 **Critical-path allocation:** 3.5 hours

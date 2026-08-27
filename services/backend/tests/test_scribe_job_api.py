@@ -161,3 +161,90 @@ async def test_invalid_idempotency_key_fails_before_rpc(monkeypatch: pytest.Monk
 
     assert response.status_code == 422
     assert fake.rpc_calls == []
+
+
+@pytest.mark.asyncio
+async def test_patient_job_feed_includes_queue_position_and_safe_progress_events(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class StatusGateway:
+        async def select(
+            self, table: str, access_token: str, params: dict[str, str]
+        ) -> list[dict[str, Any]]:
+            assert access_token == "caller-token"
+            if table == "ai_jobs":
+                assert params["patient_id"] == f"eq.{PATIENT_ID}"
+                return [job_row()]
+            assert table == "ai_job_events"
+            return [
+                {
+                    "id": "e0000000-0000-0000-0000-000000000001",
+                    "job_id": JOB_ID,
+                    "event_kind": "generating",
+                    "created_at": "2026-08-27T12:00:01+08:00",
+                }
+            ]
+
+        async def rpc_value(
+            self, function_name: str, access_token: str, payload: dict[str, Any]
+        ) -> int:
+            assert function_name == "ai_job_queue_position"
+            assert access_token == "caller-token"
+            assert payload == {"p_job_id": JOB_ID}
+            return 2
+
+    fake = StatusGateway()
+    monkeypatch.setattr(scribe_jobs, "gateway", lambda settings: fake)
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        jobs = await client.get(f"/patients/{PATIENT_ID}/scribe-jobs")
+        events = await client.get(f"/patients/{PATIENT_ID}/scribe-job-events")
+
+    assert jobs.status_code == 200
+    assert jobs.json()[0]["queue_position"] == 2
+    assert events.json()[0]["event_kind"] == "generating"
+    assert "safe_metadata" not in events.json()[0]
+
+
+@pytest.mark.asyncio
+async def test_provider_usage_dashboard_aggregates_sanitized_metrics(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class UsageGateway:
+        async def select(
+            self, table: str, access_token: str, params: dict[str, str]
+        ) -> list[dict[str, Any]]:
+            assert table == "ai_jobs"
+            assert access_token == "caller-token"
+            assert params["status"] == "eq.succeeded"
+            return [
+                {
+                    "provider_name": "ollama",
+                    "model_name": "gpt-oss:20b",
+                    "input_tokens": 120,
+                    "output_tokens": 40,
+                    "estimated_cost_usd": 0,
+                    "claimed_at": "2026-08-27T12:00:00+08:00",
+                    "completed_at": "2026-08-27T12:00:02+08:00",
+                }
+            ]
+
+    monkeypatch.setattr(scribe_jobs, "gateway", lambda settings: UsageGateway())
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.get("/provider-usage")
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "provider": "ollama",
+            "model": "gpt-oss:20b",
+            "calls": 1,
+            "input_tokens": 120,
+            "output_tokens": 40,
+            "average_latency_ms": 2000.0,
+            "estimated_cost_usd": 0.0,
+        }
+    ]

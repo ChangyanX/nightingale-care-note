@@ -1,3 +1,4 @@
+from app.domain.redaction.pseudonyms import EncryptedMapping, PseudonymCipher, PseudonymError
 from app.domain.redaction.service import (
     RedactionCategory,
     RedactionError,
@@ -12,6 +13,9 @@ __all__ = [
     "RedactionError",
     "RedactionFinding",
     "VerifiedRedaction",
+    "EncryptedMapping",
+    "PseudonymCipher",
+    "PseudonymError",
     "redact_for_llm",
     "verify_redacted_text",
 ]

@@ -2,6 +2,8 @@
   "schema_version": "1.0",
   "interaction_type": "ai_patient_session",
   "summary": "The patient reports worsening nighttime cough and asks whether review should occur earlier.",
+  "source_language": "en",
+  "model_confidence": 0.89,
   "facts": [
     {
       "category": "patient_context",
@@ -9,6 +11,7 @@
       "source_quote": "my cough has been worse at night"
     }
   ],
+  "medications": [],
   "open_questions": [
     "Should the planned review be brought forward?"
   ],

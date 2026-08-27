@@ -7,9 +7,17 @@ A provenance-first longitudinal Care Note for role-based clinical collaboration,
 - `apps/web`: Next.js and TypeScript frontend
 - `services/backend`: FastAPI orchestration API and later background worker
 - `supabase`: PostgreSQL migrations, Row-Level Security policies, and synthetic seed data
+- `packages/design-tokens`: shared web design tokens
+- `containers` and `.devcontainer`: reproducible container/development environments
 - `docs`: blueprint, phase plans, requirements traceability, and submission checklist
 
 The application is a modular monolith. Web, API, and worker processes are independently runnable but share one domain model and one PostgreSQL database.
+
+Clinical data follows `browser → FastAPI → Supabase`. The browser uses the
+Supabase publishable client only for Auth session lifecycle and RLS-authorized
+Realtime invalidation; it does not call tables, database RPCs, Storage, or Edge
+Functions directly. Run `npm --prefix apps/web run check:supabase-boundary` to
+verify this constraint.
 
 ## Prerequisites
 
@@ -31,6 +39,10 @@ make dev-web
 ```
 
 The web application runs at `http://localhost:3000`; the API runs at `http://localhost:8000`; API documentation is available at `http://localhost:8000/docs`.
+
+Alternatively, open the repository in a Dev Container or build the isolated
+services with `docker compose build`. Compose never supplies secrets; it reads
+an ignored `.env` only for the backend service.
 
 Local synthetic accounts use the password `NightingaleDemo2026!` and the `@nightingale.local` email addresses declared in `supabase/seed.sql`. These credentials are for the disposable local stack only; do not reuse them in a hosted project.
 
@@ -166,7 +178,15 @@ flow, see [Supabase setup](docs/supabase-setup.md) and
 make lint
 make typecheck
 make test
+make generate-api
+pnpm test:visual
 ```
+
+`make generate-api` exports FastAPI OpenAPI and regenerates the committed
+TypeScript `paths` contract used by the generated API client. Visual regression
+runs desktop/mobile Chromium snapshots plus keyboard navigation. Install local
+hooks with `pre-commit install` if desired; every hook check is also runnable
+directly.
 
 For a non-strict inventory of release evidence and open gates:
 
@@ -196,12 +216,20 @@ Run one genuine call over the committed synthetic transcript:
 
 ```bash
 make smoke-llm
+make smoke-llm-nurse
+make smoke-llm-patient
 ```
 
-The command performs deterministic redaction before invoking Groq strict JSON
-schema mode. Its output contains only provider/model/request/token/count
-metadata and never prints the source or generated clinical text. It does not
-yet persist the result; durable entry/highlight persistence is P4-T05.
+The commands perform deterministic redaction before invoking Groq strict JSON
+schema mode. Output contains only provider/model/request/token/count metadata
+and never prints source or generated clinical text. Smoke responses are not
+persisted; the durable worker path separately records job progress and
+sanitized provider usage metadata.
+
+For a fully local second adapter, set `LLM_PROVIDER=ollama`, point
+`LLM_BASE_URL` at the loopback Ollama OpenAI-compatible endpoint, and choose a
+locally installed model. Provider facts and runtime evidence are documented in
+[Provider latency and cost](docs/provider-latency-and-cost.md).
 
 ## Security boundaries
 
@@ -215,6 +243,7 @@ than production-grade de-identification. Deployed services use TLS; PostgreSQL
 and private object storage use the selected provider's encryption-at-rest controls.
 
 See [the build phases](docs/README.md), [Phase 1 tasks](docs/phase-1/README.md),
+the [Phase 1–4 optional-deliverables audit](docs/phase-1-4-optional-deliverables.md),
 and [Phase 4 AI task breakdown](docs/phase-4/README.md) for the implementation plan.
 
 Supabase local and hosted setup is documented in [docs/supabase-setup.md](docs/supabase-setup.md). Credential ownership, local file placement, application token flow, deployment secrets, and rotation are documented in [docs/credentials-and-access.md](docs/credentials-and-access.md).

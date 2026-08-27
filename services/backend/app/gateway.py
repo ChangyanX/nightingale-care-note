@@ -62,6 +62,43 @@ class SupabaseGateway:
             )
         return self._decode_object(response)
 
+    async def rpc_value(
+        self,
+        function_name: str,
+        access_token: str,
+        payload: dict[str, Any],
+    ) -> Any:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            response = await client.post(
+                f"{self.base_url}/rest/v1/rpc/{function_name}",
+                headers=self._headers(access_token),
+                json=payload,
+            )
+        if response.is_error:
+            raise self._error(response)
+        return response.json()
+
+    async def mutate(
+        self,
+        method: str,
+        table: str,
+        access_token: str,
+        *,
+        payload: dict[str, Any] | list[dict[str, Any]] | None = None,
+        params: dict[str, str] | None = None,
+    ) -> list[dict[str, Any]]:
+        if method not in {"POST", "PATCH", "DELETE"}:
+            raise ValueError("Unsupported mutation method")
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            response = await client.request(
+                method,
+                f"{self.base_url}/rest/v1/{table}",
+                headers={**self._headers(access_token), "prefer": "return=representation"},
+                params=params,
+                json=payload,
+            )
+        return self._decode_list(response)
+
     @staticmethod
     def _error(response: httpx.Response) -> SupabaseGatewayError:
         code: str | None = None

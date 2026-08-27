@@ -723,7 +723,12 @@ All mutation endpoints must:
 
 Use optimistic concurrency control rather than CRDTs.
 
-Lightweight realtime collaboration is required for timeline entries, comments, tasks, and highlight decisions. Supabase Realtime invalidates or updates authorized client queries. Character-level co-editing, shared cursors, and CRDTs remain out of scope.
+Lightweight realtime collaboration is required for timeline entries, comments,
+tasks, and highlight decisions. The browser may use RLS-authorized Supabase
+Realtime only as an invalidation signal; it discards the row payload and
+refetches through FastAPI. Browser-side Supabase Data API, RPC, Storage, and
+Edge Function calls are prohibited. Character-level co-editing, shared cursors,
+and CRDTs remain out of scope.
 
 An update includes the version the client last read:
 

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -74,6 +74,11 @@ class CareTaskResponse(BaseModel):
     created_by: UUID
     status: CareTaskStatus
     priority: CareTaskPriority
+    category: Literal[
+        "clinical_review", "medication", "monitoring", "administrative", "follow_up"
+    ] = "follow_up"
+    patient_visible: bool = False
+    patient_acknowledged_at: datetime | None = None
     due_at: datetime | None
     completed_at: datetime | None
     created_at: datetime
@@ -145,6 +150,19 @@ class RevisionComparisonResponse(BaseModel):
     current_content: str
     has_changes: bool
     unified_diff: str
+    word_diff: list[dict[str, str]] = Field(default_factory=list)
+
+
+class MergeHintRequest(BaseModel):
+    base_content: str = Field(max_length=20_000)
+    proposed_content: str = Field(max_length=20_000)
+
+
+class MergeHintResponse(BaseModel):
+    current_version: int
+    merged_content: str
+    has_conflict: bool
+    strategy: Literal["proposed", "current", "conflict_markers"]
 
 
 class RevertRequest(BaseModel):
@@ -153,8 +171,136 @@ class RevertRequest(BaseModel):
     change_reason: str | None = Field(default=None, max_length=500)
 
 
+class UpdateCareTaskRequest(BaseModel):
+    status: CareTaskStatus | None = None
+    priority: CareTaskPriority | None = None
+    category: (
+        Literal["clinical_review", "medication", "monitoring", "administrative", "follow_up"] | None
+    ) = None
+    assigned_to: UUID | None = None
+    due_at: datetime | None = None
+    patient_visible: bool | None = None
+
+
+class CommentResponse(BaseModel):
+    id: UUID
+    clinic_id: UUID
+    patient_id: UUID
+    entry_id: UUID | None
+    section_id: UUID | None
+    parent_comment_id: UUID | None
+    author_id: UUID
+    body: str
+    body_format: Literal["plain", "markdown"] = "plain"
+    status: Literal["open", "resolved"]
+    assigned_to: UUID | None
+    source_version_id: UUID | None = None
+    source_start_offset: int | None = None
+    source_end_offset: int | None = None
+    quoted_text: str | None = None
+    created_at: datetime
+    resolved_at: datetime | None
+
+
+class CreateCommentRequest(BaseModel):
+    entry_id: UUID | None = None
+    section_id: UUID | None = None
+    parent_comment_id: UUID | None = None
+    body: str = Field(min_length=1, max_length=5_000)
+    body_format: Literal["plain", "markdown"] = "plain"
+    mention_ids: list[UUID] = Field(default_factory=list, max_length=20)
+    assignee_ids: list[UUID] = Field(default_factory=list, max_length=20)
+    source_version_id: UUID | None = None
+    source_start_offset: int | None = Field(default=None, ge=0)
+    source_end_offset: int | None = Field(default=None, gt=0)
+    quoted_text: str | None = Field(default=None, max_length=1_000)
+
+
+class CommentReactionRequest(BaseModel):
+    reaction: Literal["acknowledged", "agree", "question"]
+
+
+class HighlightResponse(BaseModel):
+    id: UUID
+    clinic_id: UUID
+    patient_id: UUID
+    source_entry_id: UUID
+    source_version_id: UUID
+    source_start_offset: int
+    source_end_offset: int
+    quoted_text: str
+    normalized_claim: str
+    risk_level: Literal["information", "attention", "critical"]
+    category: Literal[
+        "risk", "symptom", "medication", "care_gap", "patient_context", "follow_up"
+    ] = "risk"
+    risk_reason: str
+    score: float
+    status: Literal["suggested", "accepted", "rejected"]
+    generated_by: Literal["rule", "ai", "clinician"]
+    duplicate_group_id: UUID | None = None
+    reviewed_by: UUID | None
+    reviewed_at: datetime | None
+    created_at: datetime
+
+
+class BulkHighlightReviewRequest(BaseModel):
+    highlight_ids: list[UUID] = Field(min_length=1, max_length=100)
+    status: Literal["accepted", "rejected"]
+
+
+class BatchRevertOperation(BaseModel):
+    entry_id: UUID
+    source_version: int = Field(gt=0)
+    expected_version: int = Field(gt=0)
+    change_reason: str | None = Field(default=None, max_length=500)
+
+
+class BatchRevertRequest(BaseModel):
+    operations: list[BatchRevertOperation] = Field(min_length=1, max_length=20)
+
+
+class NotificationResponse(BaseModel):
+    id: UUID
+    clinic_id: UUID
+    patient_id: UUID | None
+    recipient_id: UUID
+    event_type: Literal["mention", "assignment", "ai_job_completed"]
+    resource_type: str
+    resource_id: UUID
+    status: Literal["pending", "delivered", "failed", "dismissed"]
+    created_at: datetime
+
+
+class PatientSummaryReviewResponse(BaseModel):
+    id: UUID
+    clinic_id: UUID
+    patient_id: UUID
+    source_entry_id: UUID
+    summary_entry_id: UUID | None
+    proposed_content: str
+    status: Literal["suggested", "accepted", "rejected"]
+    reviewed_by: UUID | None
+    reviewed_at: datetime | None
+    created_at: datetime
+
+
+class PatientSummaryReviewRequest(BaseModel):
+    status: Literal["accepted", "rejected"]
+
+
+class AuditExportRow(BaseModel):
+    id: UUID
+    action: str
+    resource_type: str
+    resource_id: UUID
+    actor_role: str
+    created_at: datetime
+    metadata: dict[str, Any]
+
+
 AiInteractionType = Literal["doctor_consult", "nurse_consult", "ai_patient_session"]
-AiJobStatus = Literal["queued", "processing", "succeeded", "failed", "dead_letter"]
+AiJobStatus = Literal["queued", "processing", "succeeded", "failed", "dead_letter", "cancelled"]
 
 
 class CreateScribeJobRequest(BaseModel):
@@ -181,4 +327,48 @@ class ScribeJobResponse(BaseModel):
     safe_error_code: str | None
     output_entry_id: UUID | None
     created_at: datetime
+    updated_at: datetime
+    queue_position: int | None = None
+    provider_name: str | None = None
+    model_name: str | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    estimated_cost_usd: float | None = None
+
+
+class ScribeJobEventResponse(BaseModel):
+    id: UUID
+    job_id: UUID
+    event_kind: Literal[
+        "generating", "validating", "persisting", "completed", "retrying", "cancelled"
+    ]
+    created_at: datetime
+
+
+class ProviderUsageResponse(BaseModel):
+    provider: str
+    model: str
+    calls: int
+    input_tokens: int
+    output_tokens: int
+    average_latency_ms: float
+    estimated_cost_usd: float
+
+
+FeedbackKind = Literal["accept", "reject", "pin", "edit", "comment"]
+
+
+class ImportanceFeedbackRequest(BaseModel):
+    event_id: UUID
+    clinic_id: UUID
+    topic: str = Field(min_length=1, max_length=120)
+    feedback_kind: FeedbackKind
+
+
+class ImportancePreferenceResponse(BaseModel):
+    id: UUID
+    clinic_id: UUID
+    profile_id: UUID
+    topic: str
+    weight: float
     updated_at: datetime

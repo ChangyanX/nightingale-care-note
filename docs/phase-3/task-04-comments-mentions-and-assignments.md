@@ -1,6 +1,6 @@
 # P3-T04 — Comments, Mentions, and Assignments
 
-**Status:** Pending
+**Status:** Implemented locally; hosted role walkthrough pending
 **Full estimate:** 1.5 hours
 **16-hour path:** 30 minutes
 **Dependencies:** P3-T01, Phase 2 task mutation

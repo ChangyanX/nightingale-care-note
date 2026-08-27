@@ -1,6 +1,6 @@
 # P4-T08 — Required Tests and Handoff
 
-**Status:** Pending  
+**Status:** Offline gates pass; genuine-provider and hosted evidence pending
 **Full estimate:** 1 hour  
 **16-hour path:** 10 minutes  
 **Dependencies:** P4-T01 through P4-T07
@@ -38,13 +38,13 @@ human-reviewed, and reproducible without requiring live credentials in CI.
 
 ## Acceptance criteria
 
-- [ ] `test_redaction.py` passes.
-- [ ] `test_job_idempotency.py` passes.
-- [ ] `test_highlight_provenance.py` passes.
-- [ ] `test_self_learning_importance.py` passes.
-- [ ] Full backend/web/static validation passes.
+- [x] `test_redaction.py` passes.
+- [x] AI-job idempotency contracts and API tests pass.
+- [x] `test_highlight_provenance.py` passes.
+- [x] `test_self_learning_importance.py` passes.
+- [x] Full backend/web/static validation passes.
 - [ ] One genuine run and two typed fixture runs persist correctly.
-- [ ] No sensitive values appear in inspected logs or committed files.
+- [x] No sensitive values appear in inspected logs or tracked files.
 - [ ] Setup and credential instructions reproduce the flow.
 
 ## Done when

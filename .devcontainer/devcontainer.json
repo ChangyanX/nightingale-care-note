@@ -1,0 +1,23 @@
+{
+  "name": "Nightingale Care Note",
+  "dockerComposeFile": "../compose.yaml",
+  "service": "workspace",
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
+  "forwardPorts": [3000, 8000, 54321, 54323],
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    }
+  },
+  "postCreateCommand": "corepack enable && pnpm install && uv sync --directory services/backend --dev",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "ms-python.python",
+        "charliermarsh.ruff"
+      ]
+    }
+  }
+}

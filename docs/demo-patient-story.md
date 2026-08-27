@@ -8,6 +8,9 @@ it is not medical advice and must not be presented as a diagnostic workflow.
 
 **Patient:** Parker Patient (`SYN-A-001`), Harbour Family Clinic  
 **Current concern:** A persistent cough is more frequent at night.  
+**Secondary concern:** Sleep disruption is affecting daytime concentration,
+without synthetic red-flag symptoms. This remains below the primary concern in
+the bounded importance ordering.
 **Recent change:** The patient reports being woken twice and noticing worse
 symptoms in a cold room.  
 **Watch item:** Night-time symptoms have worsened since the initial staff call;
@@ -55,6 +58,14 @@ Each item contains a stable kind, concise claim, importance reason, status,
 occurrence time, optional task ID, source entry ID, and source-record summary.
 Phase 3/4 provenance adds historical version and exact text offsets before a
 highlight can be accepted or published as an exact-source highlight.
+
+## Mobile content guidance
+
+- Glance claims target 120 characters and remain understandable without truncation.
+- Importance reasons target 180 characters; assistive technology retains the full value.
+- Task titles target 120 characters and never duplicate raw clinical-note bodies.
+- Timeline text wraps naturally and is not clipped to a fixed number of lines.
+- Source, role, status, and risk remain text-labelled rather than color-only.
 
 ## API response boundaries
 

@@ -29,6 +29,7 @@ export function RevisionViewer({ accessToken, entry, canRevert }: RevisionViewer
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [reverting, setReverting] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const [revisions, setRevisions] = useState<Revision[]>([]);
   const [comparison, setComparison] = useState<RevisionComparison | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +67,17 @@ export function RevisionViewer({ accessToken, entry, canRevert }: RevisionViewer
     } finally {
       setLoading(false);
     }
+  }
+
+  async function loadOlder() {
+    const oldest = revisions.at(-1);
+    if (!oldest) return;
+    setLoadingOlder(true);
+    try {
+      const older = await apiGet<Revision[]>(`/entries/${entry.id}/versions?before_version=${oldest.version_number}&limit=50`, accessToken);
+      setRevisions((current) => [...current, ...older]);
+    } catch { setError("Older revisions could not be loaded."); }
+    finally { setLoadingOlder(false); }
   }
 
   async function revert() {
@@ -125,6 +137,7 @@ export function RevisionViewer({ accessToken, entry, canRevert }: RevisionViewer
                     </button>
                   </li>
                 ))}
+                {revisions.length >= 50 ? <li><button type="button" disabled={loadingOlder} onClick={loadOlder}>{loadingOlder ? "Loading…" : "Load older versions"}</button></li> : null}
               </ol>
               {comparison ? (
                 <div className="revision-comparison">
@@ -136,6 +149,7 @@ export function RevisionViewer({ accessToken, entry, canRevert }: RevisionViewer
                     <h4>Current · version {comparison.current_version}</h4>
                     <p>{comparison.current_content}</p>
                   </div>
+                  {comparison.word_diff.length ? <div><h4>Word-level changes</h4><p>{comparison.word_diff.map((part, index) => <span className={`word-${part.kind}`} key={`${part.kind}-${index}`}>{part.text}</span>)}</p></div> : null}
                   {!comparison.has_changes ? <p className="revision-note">The selected text matches the current text.</p> : null}
                   {canRevert && comparison.selected_version !== comparison.current_version ? (
                     <button

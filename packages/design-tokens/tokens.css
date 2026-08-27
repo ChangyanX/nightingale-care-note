@@ -1,0 +1,18 @@
+:root {
+  --nc-color-ink: #17251f;
+  --nc-color-muted: #627168;
+  --nc-color-line: #dce5df;
+  --nc-color-paper: #ffffff;
+  --nc-color-wash: #f3f7f4;
+  --nc-color-brand: #27614b;
+  --nc-color-brand-soft: #e5f1eb;
+  --nc-color-warning: #9a5b16;
+  --nc-color-information: #385f91;
+  --nc-color-critical: #a33a2b;
+  --nc-radius-sm: 8px;
+  --nc-radius-md: 14px;
+  --nc-radius-lg: 22px;
+  --nc-shadow-card: 0 8px 30px rgba(32, 60, 47, 0.06);
+  --nc-duration-fast: 150ms;
+  --nc-duration-normal: 240ms;
+}

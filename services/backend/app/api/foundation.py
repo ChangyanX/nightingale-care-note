@@ -1,8 +1,12 @@
+import base64
+import hashlib
+import json
 import unicodedata
+from datetime import UTC, datetime
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
 from app.auth import AuthDependency
 from app.config import Settings, get_settings
@@ -17,6 +21,7 @@ from app.schemas import (
     PatientResponse,
     SourceRecordResponse,
     TimelineEntryResponse,
+    UpdateCareTaskRequest,
     UpdateEntryRequest,
 )
 
@@ -52,19 +57,40 @@ async def _get_timeline_rows(
     patient_id: UUID,
     access_token: str,
     client: SupabaseGateway,
+    *,
+    limit: int = 200,
+    cursor: str | None = None,
+    entry_type: str | None = None,
+    author_role: str | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
 ) -> list[dict[str, Any]]:
+    params = {
+        "select": (
+            "id,clinic_id,patient_id,author_id,author_role,entry_type,visibility,"
+            "content,source_record_id,current_version,occurred_at"
+        ),
+        "patient_id": f"eq.{patient_id}",
+        "order": "occurred_at.desc,id.desc",
+        "limit": str(limit),
+    }
+    if entry_type:
+        params["entry_type"] = f"eq.{entry_type}"
+    if author_role:
+        params["author_role"] = f"eq.{author_role}"
+    if date_from:
+        params["occurred_at"] = f"gte.{date_from.isoformat()}"
+    if date_to:
+        params["occurred_at"] = f"lte.{date_to.isoformat()}"
+    if cursor:
+        occurred_at, entry_id = _decode_timeline_cursor(cursor)
+        params["or"] = (
+            f"(occurred_at.lt.{occurred_at},and(occurred_at.eq.{occurred_at},id.lt.{entry_id}))"
+        )
     rows = await client.select(
         "entries",
         access_token,
-        {
-            "select": (
-                "id,clinic_id,patient_id,author_id,author_role,entry_type,visibility,"
-                "content,source_record_id,current_version,occurred_at"
-            ),
-            "patient_id": f"eq.{patient_id}",
-            "order": "occurred_at.desc,id.desc",
-            "limit": "200",
-        },
+        params,
     )
     source_ids = sorted({str(row["source_record_id"]) for row in rows})
     if not source_ids:
@@ -82,6 +108,22 @@ async def _get_timeline_rows(
     for row in rows:
         row["source"] = sources_by_id.get(str(row["source_record_id"]))
     return rows
+
+
+def _encode_timeline_cursor(row: dict[str, Any]) -> str:
+    payload = json.dumps([str(row["occurred_at"]), str(row["id"])], separators=(",", ":"))
+    return base64.urlsafe_b64encode(payload.encode()).decode().rstrip("=")
+
+
+def _decode_timeline_cursor(cursor: str) -> tuple[str, UUID]:
+    try:
+        padded = cursor + "=" * (-len(cursor) % 4)
+        value = json.loads(base64.urlsafe_b64decode(padded).decode())
+        if not isinstance(value, list) or len(value) != 2 or not isinstance(value[0], str):
+            raise ValueError
+        return value[0], UUID(str(value[1]))
+    except (ValueError, TypeError, json.JSONDecodeError, UnicodeDecodeError) as error:
+        raise HTTPException(status_code=422, detail="Invalid timeline cursor") from error
 
 
 async def _get_task_rows(
@@ -137,15 +179,19 @@ async def me(auth: AuthDependency, settings: SettingsDependency) -> MeResponse:
 async def list_patients(
     auth: AuthDependency,
     settings: SettingsDependency,
+    query: str | None = Query(default=None, min_length=1, max_length=100, alias="q"),
 ) -> list[PatientResponse]:
+    params = {
+        "select": "id,clinic_id,synthetic_identifier,display_name",
+        "order": "display_name.asc",
+        "limit": "100",
+    }
+    if query:
+        params["search_document"] = f"fts.{query}"
     rows = await gateway(settings).select(
         "patients",
         auth.access_token,
-        {
-            "select": "id,clinic_id,synthetic_identifier,display_name",
-            "order": "display_name.asc",
-            "limit": "100",
-        },
+        params,
     )
     return [PatientResponse.model_validate(row) for row in rows]
 
@@ -169,10 +215,30 @@ async def get_timeline(
     patient_id: UUID,
     auth: AuthDependency,
     settings: SettingsDependency,
+    response: Response,
+    limit: int = Query(default=50, ge=1, le=200),
+    cursor: str | None = Query(default=None, max_length=500),
+    entry_type: str | None = Query(default=None, max_length=80),
+    author_role: str | None = Query(default=None, pattern="^(patient|staff|clinician|system)$"),
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
 ) -> list[TimelineEntryResponse]:
     client = gateway(settings)
     await _get_patient_row(patient_id, auth.access_token, client)
-    rows = await _get_timeline_rows(patient_id, auth.access_token, client)
+    rows = await _get_timeline_rows(
+        patient_id,
+        auth.access_token,
+        client,
+        limit=limit + 1,
+        cursor=cursor,
+        entry_type=entry_type,
+        author_role=author_role,
+        date_from=date_from,
+        date_to=date_to,
+    )
+    if len(rows) > limit:
+        response.headers["x-next-cursor"] = _encode_timeline_cursor(rows[limit - 1])
+        rows = rows[:limit]
     return [TimelineEntryResponse.model_validate(row) for row in rows]
 
 
@@ -201,6 +267,7 @@ async def get_glance(
     patient_id: UUID,
     auth: AuthDependency,
     settings: SettingsDependency,
+    response: Response,
 ) -> GlanceResponse:
     client = gateway(settings)
     await _get_patient_row(patient_id, auth.access_token, client)
@@ -289,7 +356,45 @@ async def get_glance(
             )
         )
 
-    return GlanceResponse(patient_id=patient_id, items=items[:6])
+    result = GlanceResponse(patient_id=patient_id, items=items[:6])
+    digest = hashlib.sha256(result.model_dump_json().encode()).hexdigest()[:24]
+    response.headers["etag"] = f'"{digest}"'
+    response.headers["cache-control"] = "private, max-age=15, must-revalidate"
+    return result
+
+
+@router.patch("/tasks/{task_id}", response_model=CareTaskResponse, tags=["care tasks"])
+async def update_care_task(
+    task_id: UUID,
+    request: UpdateCareTaskRequest,
+    auth: AuthDependency,
+    settings: SettingsDependency,
+) -> CareTaskResponse:
+    payload = request.model_dump(exclude_unset=True, mode="json")
+    if not payload:
+        raise HTTPException(status_code=422, detail="At least one task field is required")
+    if request.status == "completed":
+        payload["completed_at"] = datetime.now(UTC).isoformat()
+    elif request.status is not None:
+        payload["completed_at"] = None
+    rows = await gateway(settings).mutate(
+        "PATCH", "care_tasks", auth.access_token, payload=payload, params={"id": f"eq.{task_id}"}
+    )
+    if not rows:
+        raise HTTPException(status_code=404, detail="Care task not found")
+    return CareTaskResponse.model_validate(rows[0])
+
+
+@router.post("/tasks/{task_id}/acknowledge", response_model=CareTaskResponse, tags=["care tasks"])
+async def acknowledge_care_task(
+    task_id: UUID,
+    auth: AuthDependency,
+    settings: SettingsDependency,
+) -> CareTaskResponse:
+    row = await gateway(settings).rpc(
+        "acknowledge_care_task", auth.access_token, {"p_task_id": str(task_id)}
+    )
+    return CareTaskResponse.model_validate(row)
 
 
 @router.post(

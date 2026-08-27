@@ -1,0 +1,29 @@
+services:
+  workspace:
+    build:
+      context: .
+      dockerfile: containers/workspace.Dockerfile
+    command: sleep infinity
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:8000
+    volumes:
+      - .:/workspace:cached
+  api:
+    build:
+      context: .
+      dockerfile: containers/backend.Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "8000:8000"
+  web:
+    build:
+      context: .
+      dockerfile: containers/web.Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api

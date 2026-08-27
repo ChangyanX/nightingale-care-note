@@ -18,6 +18,8 @@ class RedactionCategory(StrEnum):
     EMAIL = "email"
     DATE_OF_BIRTH = "date_of_birth"
     ADDRESS = "address"
+    LOCATION = "location"
+    ORGANIZATION_IDENTIFIER = "organization_identifier"
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,6 +85,22 @@ _RULES: Final = (
         re.compile(r"\bAddress\s*:\s*[^\n;]{5,160}", _FLAGS),
     ),
     _RedactionRule(
+        RedactionCategory.ORGANIZATION_IDENTIFIER,
+        re.compile(
+            r"\b(?:Clinic|Hospital|Organisation)\s+(?:Patient|Account|Record)\s+ID"
+            r"\s*[:#-]?\s*[A-Z0-9-]{4,30}\b",
+            _FLAGS,
+        ),
+    ),
+    _RedactionRule(
+        RedactionCategory.LOCATION,
+        re.compile(
+            r"\b(?:lives|stays|works)\s+(?:at|in)\s+"
+            r"[A-Z][\w'’-]*(?:\s+[A-Z][\w'’-]*){0,4}\b",
+            re.UNICODE,
+        ),
+    ),
+    _RedactionRule(
         RedactionCategory.NAME,
         re.compile(r"\b(?:Patient\s+Name|Name)\s*:\s*[^\n;,]{2,80}", _FLAGS),
     ),
@@ -97,9 +115,9 @@ _RULES: Final = (
 )
 
 
-def _known_name_patterns(known_names: Iterable[str]) -> tuple[Pattern[str], ...]:
+def _literal_patterns(values: Iterable[str]) -> tuple[Pattern[str], ...]:
     patterns: list[Pattern[str]] = []
-    for value in known_names:
+    for value in values:
         normalized = unicodedata.normalize("NFC", value).strip()
         if len(normalized) < 2:
             continue
@@ -112,12 +130,27 @@ def _placeholder(category: RedactionCategory) -> str:
     return f"[REDACTED_{category.value.upper()}]"
 
 
-def verify_redacted_text(text: str, *, known_names: Iterable[str] = ()) -> None:
+def verify_redacted_text(
+    text: str,
+    *,
+    known_names: Iterable[str] = (),
+    known_locations: Iterable[str] = (),
+    organization_identifiers: Iterable[str] = (),
+) -> None:
     """Reject supported sensitive patterns without returning the matching value."""
 
-    for pattern in _known_name_patterns(known_names):
+    for pattern in _literal_patterns(known_names):
         if pattern.search(text):
             raise RedactionError("Redaction verification failed for category: name")
+    for category, values in (
+        (RedactionCategory.LOCATION, known_locations),
+        (RedactionCategory.ORGANIZATION_IDENTIFIER, organization_identifiers),
+    ):
+        for pattern in _literal_patterns(values):
+            if pattern.search(text):
+                raise RedactionError(
+                    f"Redaction verification failed for category: {category.value}"
+                )
     for rule in _RULES:
         if rule.pattern.search(text):
             raise RedactionError(
@@ -125,7 +158,13 @@ def verify_redacted_text(text: str, *, known_names: Iterable[str] = ()) -> None:
             )
 
 
-def redact_for_llm(text: str, *, known_names: Iterable[str] = ()) -> VerifiedRedaction:
+def redact_for_llm(
+    text: str,
+    *,
+    known_names: Iterable[str] = (),
+    known_locations: Iterable[str] = (),
+    organization_identifiers: Iterable[str] = (),
+) -> VerifiedRedaction:
     """Return verified provider-safe text; never retain raw matches in metadata."""
 
     normalized = unicodedata.normalize("NFC", text)
@@ -136,15 +175,30 @@ def redact_for_llm(text: str, *, known_names: Iterable[str] = ()) -> VerifiedRed
     redacted = normalized
     normalized_names = tuple(known_names)
 
-    for pattern in _known_name_patterns(normalized_names):
+    for pattern in _literal_patterns(normalized_names):
         redacted, count = pattern.subn(_placeholder(RedactionCategory.NAME), redacted)
         counts[RedactionCategory.NAME] += count
+
+    for pattern in _literal_patterns(known_locations):
+        redacted, count = pattern.subn(_placeholder(RedactionCategory.LOCATION), redacted)
+        counts[RedactionCategory.LOCATION] += count
+
+    for pattern in _literal_patterns(organization_identifiers):
+        redacted, count = pattern.subn(
+            _placeholder(RedactionCategory.ORGANIZATION_IDENTIFIER), redacted
+        )
+        counts[RedactionCategory.ORGANIZATION_IDENTIFIER] += count
 
     for rule in _RULES:
         redacted, count = rule.pattern.subn(_placeholder(rule.category), redacted)
         counts[rule.category] += count
 
-    verify_redacted_text(redacted, known_names=normalized_names)
+    verify_redacted_text(
+        redacted,
+        known_names=normalized_names,
+        known_locations=known_locations,
+        organization_identifiers=organization_identifiers,
+    )
     findings = tuple(
         RedactionFinding(category=category, count=count)
         for category, count in counts.items()
