@@ -99,3 +99,10 @@ def test_hosted_foundation_seed_preserves_story_dates_and_tasks() -> None:
 
     assert len({row["occurred_at"] for row in calls["entries"]}) >= 3
     assert {row["status"] for row in calls["care_tasks"]} == {"open", "completed"}
+    assert {row["status"] for row in calls["comments"]} == {"open", "resolved"}
+    assert {row["status"] for row in calls["highlights"]} == {"accepted", "rejected"}
+    assert any(row["generated_by"] == "ai" for row in calls["highlights"])
+    for row in calls["highlights"]:
+        entry = next(entry for entry in calls["entries"] if entry["id"] == row["source_entry_id"])
+        content = str(entry["content"])
+        assert content[row["source_start_offset"] : row["source_end_offset"]] == row["quoted_text"]

@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.foundation import router as foundation_router
+from app.api.revisions import router as revisions_router
 from app.config import get_settings
 from app.gateway import SupabaseGatewayError
 from app.middleware import RequestIdMiddleware
@@ -24,6 +25,7 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
 )
 app.include_router(foundation_router)
+app.include_router(revisions_router)
 
 
 @app.exception_handler(SupabaseGatewayError)

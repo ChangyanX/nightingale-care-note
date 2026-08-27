@@ -5,11 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { AppHeader } from "@/components/app-header";
+import { RevisionViewer } from "@/components/revision-viewer";
 import { ApiError, apiGet } from "@/lib/api/client";
 import type { CareTask, CurrentUser, Glance, Patient, TimelineEntry } from "@/lib/api/types";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
-type PatientPageData = { user: CurrentUser; patient: Patient; glance: Glance; timeline: TimelineEntry[]; tasks: CareTask[] };
+type PatientPageData = { user: CurrentUser; patient: Patient; glance: Glance; timeline: TimelineEntry[]; tasks: CareTask[]; accessToken: string };
 
 const KIND_LABELS = {
   current_concern: "Current concern",
@@ -48,7 +49,7 @@ export default function PatientPage() {
           apiGet<TimelineEntry[]>(`/patients/${patientId}/timeline`, token),
           apiGet<CareTask[]>(`/patients/${patientId}/tasks`, token),
         ]);
-        if (active) setData({ user, patient, glance, timeline, tasks });
+        if (active) setData({ user, patient, glance, timeline, tasks, accessToken: token });
       } catch (requestError) {
         if (!active) return;
         if (requestError instanceof ApiError && requestError.status === 401) { router.replace("/sign-in"); return; }
@@ -100,6 +101,7 @@ export default function PatientPage() {
                 <div className="entry-rail"><span /></div><div className="entry-body">
                   <div className="entry-meta"><span className="role-label">{isAi ? "AI generated" : readable(entry.author_role)}</span><span>{readable(entry.entry_type)}</span><time dateTime={entry.occurred_at}>{formatDate(entry.occurred_at, true)}</time></div>
                   <p>{entry.content}</p><footer><span>Source: {entry.source ? readable(entry.source.source_type) : "Unavailable"}</span>{entry.source?.external_reference ? <span>{entry.source.external_reference}</span> : null}<span>Version {entry.current_version}</span></footer>
+                  {data.user.memberships.length ? <RevisionViewer accessToken={data.accessToken} entry={entry} canRevert={entry.author_id === data.user.id && (entry.author_role === "staff" || entry.author_role === "clinician")} /> : null}
                 </div>
               </article></div>;
             })}</div> : <div className="empty-state"><h3>No timeline entries</h3><p>Permitted manual and AI-scribed entries will appear here.</p></div>}

@@ -8,6 +8,9 @@
 
 This phase implements the challenge's central trust model. Users should be able to collaborate around a note, inspect how it changed, return to a prior state, and follow every surfaced highlight back to its source. Prioritize reliable section-level collaboration over a complex real-time document editor.
 
+The implementation-level dependency order, MVP/optional scope, tests, and
+handoff evidence are maintained in [the Phase 3 task breakdown](phase-3/README.md).
+
 ## Required deliverables
 
 - Immutable entry versions and audit events.

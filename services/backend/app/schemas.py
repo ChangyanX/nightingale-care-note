@@ -108,3 +108,46 @@ class UpdateEntryRequest(BaseModel):
     expected_version: int = Field(gt=0)
     content: str = Field(min_length=1, max_length=20_000)
     change_reason: str | None = Field(default=None, max_length=500)
+
+
+class NoteSectionResponse(BaseModel):
+    id: UUID
+    clinic_id: UUID
+    patient_id: UUID
+    care_note_id: UUID
+    section_type: str
+    owner_role: Literal["staff", "clinician", "system"]
+    created_by: UUID | None
+    visibility: EntryVisibility
+    content: str
+    current_version: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class RevisionResponse(BaseModel):
+    resource_type: Literal["entry", "section"]
+    resource_id: UUID
+    version_number: int
+    content_snapshot: str
+    changed_by: UUID | None
+    changed_by_role: Literal["patient", "staff", "clinician", "system"]
+    change_reason: str | None
+    created_at: datetime
+
+
+class RevisionComparisonResponse(BaseModel):
+    resource_type: Literal["entry", "section"]
+    resource_id: UUID
+    selected_version: int
+    current_version: int
+    selected_content: str
+    current_content: str
+    has_changes: bool
+    unified_diff: str
+
+
+class RevertRequest(BaseModel):
+    source_version: int = Field(gt=0)
+    expected_version: int = Field(gt=0)
+    change_reason: str | None = Field(default=None, max_length=500)

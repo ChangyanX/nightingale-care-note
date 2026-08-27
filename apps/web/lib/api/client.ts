@@ -28,3 +28,31 @@ export async function apiGet<T>(path: string, accessToken: string): Promise<T> {
   }
   return (await response.json()) as T;
 }
+
+export async function apiPost<T>(
+  path: string,
+  accessToken: string,
+  body: unknown,
+): Promise<T> {
+  const { apiUrl } = getPublicEnvironment();
+  const response = await fetch(`${apiUrl}${path}`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    let detail = "The request could not be completed.";
+    try {
+      const responseBody = (await response.json()) as { detail?: unknown };
+      if (typeof responseBody.detail === "string") detail = responseBody.detail;
+    } catch {
+      // Keep the sanitized default; never expose an upstream response body.
+    }
+    throw new ApiError(response.status, detail);
+  }
+  return (await response.json()) as T;
+}

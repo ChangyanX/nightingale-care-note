@@ -113,9 +113,11 @@ values
 on conflict (id) do nothing;
 
 insert into public.entry_versions (
-  clinic_id, patient_id, entry_id, version_number, content_snapshot, changed_by, changed_by_role, change_reason
+  id, clinic_id, patient_id, entry_id, version_number, content_snapshot,
+  changed_by, changed_by_role, change_reason
 )
 select
+  ('c' || substring(id::text from 2))::uuid,
   clinic_id,
   patient_id,
   id,
@@ -152,15 +154,121 @@ select
 from public.note_sections
 on conflict (section_id, version_number) do nothing;
 
-insert into public.comments (id, clinic_id, patient_id, entry_id, author_id, body)
+insert into public.comments (
+  id, clinic_id, patient_id, entry_id, parent_comment_id, author_id, body,
+  status, assigned_to, resolved_at
+)
+values
+  (
+    '90000000-0000-0000-0000-000000000001',
+    '10000000-0000-0000-0000-000000000001',
+    '40000000-0000-0000-0000-000000000001',
+    '70000000-0000-0000-0000-000000000003',
+    null,
+    '20000000-0000-0000-0000-000000000002',
+    'Internal synthetic comment: please confirm the follow-up interval.',
+    'open',
+    '20000000-0000-0000-0000-000000000003',
+    null
+  ),
+  (
+    '90000000-0000-0000-0000-000000000002',
+    '10000000-0000-0000-0000-000000000001',
+    '40000000-0000-0000-0000-000000000001',
+    '70000000-0000-0000-0000-000000000003',
+    '90000000-0000-0000-0000-000000000001',
+    '20000000-0000-0000-0000-000000000003',
+    'Synthetic reply: review after the seven-day diary unless symptoms worsen.',
+    'open',
+    null,
+    null
+  ),
+  (
+    '90000000-0000-0000-0000-000000000003',
+    '10000000-0000-0000-0000-000000000001',
+    '40000000-0000-0000-0000-000000000001',
+    '70000000-0000-0000-0000-000000000004',
+    null,
+    '20000000-0000-0000-0000-000000000002',
+    'Synthetic resolved comment: inhaler-technique coaching confirmed.',
+    'resolved',
+    null,
+    '2026-08-25T10:20:00+08:00'
+  )
+on conflict (id) do update set
+  body = excluded.body,
+  status = excluded.status,
+  assigned_to = excluded.assigned_to,
+  resolved_at = excluded.resolved_at;
+
+insert into public.mentions (
+  id, clinic_id, patient_id, comment_id, mentioned_profile_id, created_by
+)
 values (
-  '90000000-0000-0000-0000-000000000001',
+  '91000000-0000-0000-0000-000000000001',
   '10000000-0000-0000-0000-000000000001',
   '40000000-0000-0000-0000-000000000001',
-  '70000000-0000-0000-0000-000000000003',
-  '20000000-0000-0000-0000-000000000002',
-  'Internal synthetic comment: please confirm the follow-up interval.'
+  '90000000-0000-0000-0000-000000000001',
+  '20000000-0000-0000-0000-000000000003',
+  '20000000-0000-0000-0000-000000000002'
 )
+on conflict (comment_id, mentioned_profile_id) do nothing;
+
+with highlight_fixtures (
+  id, entry_id, quoted_text, normalized_claim, risk_level, risk_reason,
+  score, status, generated_by
+) as (
+  values
+    (
+      'd0000000-0000-0000-0000-000000000001'::uuid,
+      '70000000-0000-0000-0000-000000000003'::uuid,
+      'nocturnal cough persists',
+      'Persistent nocturnal cough requires planned follow-up',
+      'attention'::public.highlight_risk_level,
+      'Persistent night symptoms and an unresolved monitoring plan',
+      82.000,
+      'accepted'::public.highlight_status,
+      'ai'::public.highlight_generator
+    ),
+    (
+      'd0000000-0000-0000-0000-000000000002'::uuid,
+      '70000000-0000-0000-0000-000000000007'::uuid,
+      'worse when the room is cold',
+      'Cold-room association may be relevant',
+      'information'::public.highlight_risk_level,
+      'Patient-reported context with limited independent clinical significance',
+      42.000,
+      'rejected'::public.highlight_status,
+      'rule'::public.highlight_generator
+    )
+)
+insert into public.highlights (
+  id, clinic_id, patient_id, source_entry_id, source_version_id,
+  source_start_offset, source_end_offset, quoted_text, normalized_claim,
+  risk_level, risk_reason, score, status, generated_by, reviewed_by, reviewed_at
+)
+select
+  fixture.id,
+  version.clinic_id,
+  version.patient_id,
+  version.entry_id,
+  version.id,
+  strpos(version.content_snapshot, fixture.quoted_text) - 1,
+  strpos(version.content_snapshot, fixture.quoted_text) - 1 + char_length(fixture.quoted_text),
+  fixture.quoted_text,
+  fixture.normalized_claim,
+  fixture.risk_level,
+  fixture.risk_reason,
+  fixture.score,
+  fixture.status,
+  fixture.generated_by,
+  '20000000-0000-0000-0000-000000000003',
+  '2026-08-26T09:00:00+08:00'
+from highlight_fixtures fixture
+join public.entry_versions version
+  on version.entry_id = fixture.entry_id
+ and version.version_number = 1
+where strpos(version.content_snapshot, fixture.quoted_text) > 0
 on conflict (id) do nothing;
 
 insert into public.audit_events (

@@ -66,3 +66,25 @@ export type GlanceItem = {
 };
 
 export type Glance = { patient_id: string; items: GlanceItem[] };
+
+export type Revision = {
+  resource_type: "entry" | "section";
+  resource_id: string;
+  version_number: number;
+  content_snapshot: string;
+  changed_by: string | null;
+  changed_by_role: "patient" | "staff" | "clinician" | "system";
+  change_reason: string | null;
+  created_at: string;
+};
+
+export type RevisionComparison = {
+  resource_type: "entry" | "section";
+  resource_id: string;
+  selected_version: number;
+  current_version: number;
+  selected_content: string;
+  current_content: string;
+  has_changes: boolean;
+  unified_diff: string;
+};

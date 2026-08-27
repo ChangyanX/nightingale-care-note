@@ -500,6 +500,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
         "entry_versions",
         [
             {
+                "id": f"c{str(row['id'])[1:]}",
                 "clinic_id": row["clinic_id"],
                 "patient_id": row["patient_id"],
                 "entry_id": row["id"],
@@ -523,10 +524,99 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
                 "entry_id": "70000000-0000-0000-0000-000000000003",
                 "author_id": users["STAFF_A"],
                 "body": "Internal synthetic comment: please confirm the follow-up interval.",
-            }
+                "status": "open",
+                "assigned_to": users["CLINICIAN_A"],
+                "resolved_at": None,
+            },
+            {
+                "id": "90000000-0000-0000-0000-000000000002",
+                "clinic_id": CLINIC_A_ID,
+                "patient_id": PATIENT_A_ID,
+                "entry_id": "70000000-0000-0000-0000-000000000003",
+                "parent_comment_id": "90000000-0000-0000-0000-000000000001",
+                "author_id": users["CLINICIAN_A"],
+                "body": (
+                    "Synthetic reply: review after the seven-day diary unless symptoms worsen."
+                ),
+                "status": "open",
+                "assigned_to": None,
+                "resolved_at": None,
+            },
+            {
+                "id": "90000000-0000-0000-0000-000000000003",
+                "clinic_id": CLINIC_A_ID,
+                "patient_id": PATIENT_A_ID,
+                "entry_id": "70000000-0000-0000-0000-000000000004",
+                "author_id": users["STAFF_A"],
+                "body": ("Synthetic resolved comment: inhaler-technique coaching confirmed."),
+                "status": "resolved",
+                "assigned_to": None,
+                "resolved_at": "2026-08-25T10:20:00+08:00",
+            },
         ],
         "id",
     )
+    client.upsert(
+        "mentions",
+        [
+            {
+                "id": "91000000-0000-0000-0000-000000000001",
+                "clinic_id": CLINIC_A_ID,
+                "patient_id": PATIENT_A_ID,
+                "comment_id": "90000000-0000-0000-0000-000000000001",
+                "mentioned_profile_id": users["CLINICIAN_A"],
+                "created_by": users["STAFF_A"],
+            }
+        ],
+        "comment_id,mentioned_profile_id",
+    )
+    entries_by_id = {str(row["id"]): row for row in entry_rows}
+    highlight_specs = [
+        {
+            "id": "d0000000-0000-0000-0000-000000000001",
+            "entry_id": "70000000-0000-0000-0000-000000000003",
+            "quoted_text": "nocturnal cough persists",
+            "normalized_claim": "Persistent nocturnal cough requires planned follow-up",
+            "risk_level": "attention",
+            "risk_reason": "Persistent night symptoms and an unresolved monitoring plan",
+            "score": 82.0,
+            "status": "accepted",
+            "generated_by": "ai",
+        },
+        {
+            "id": "d0000000-0000-0000-0000-000000000002",
+            "entry_id": "70000000-0000-0000-0000-000000000007",
+            "quoted_text": "worse when the room is cold",
+            "normalized_claim": "Cold-room association may be relevant",
+            "risk_level": "information",
+            "risk_reason": (
+                "Patient-reported context with limited independent clinical significance"
+            ),
+            "score": 42.0,
+            "status": "rejected",
+            "generated_by": "rule",
+        },
+    ]
+    highlight_rows: list[dict[str, Any]] = []
+    for spec in highlight_specs:
+        entry = entries_by_id[spec["entry_id"]]
+        content = str(entry["content"])
+        quote = str(spec["quoted_text"])
+        start = content.index(quote)
+        highlight_rows.append(
+            {
+                **spec,
+                "clinic_id": entry["clinic_id"],
+                "patient_id": entry["patient_id"],
+                "source_entry_id": entry["id"],
+                "source_version_id": f"c{str(entry['id'])[1:]}",
+                "source_start_offset": start,
+                "source_end_offset": start + len(quote),
+                "reviewed_by": users["CLINICIAN_A"],
+                "reviewed_at": "2026-08-26T09:00:00+08:00",
+            }
+        )
+    client.upsert("highlights", highlight_rows, "id")
     client.upsert(
         "care_tasks",
         [

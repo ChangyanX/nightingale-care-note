@@ -71,6 +71,20 @@ h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 2rem;
 .role-system .entry-meta .role-label { color: #68417e; background: #f1e8f6; }
 .entry-body > p { margin: 15px 0; line-height: 1.55; }
 .timeline-entry footer { padding-top: 11px; border-top: 1px solid #edf1ee; }
+.revision-viewer { margin-top: 10px; }
+.revision-toggle { padding: 0; border: 0; background: transparent; color: var(--green); cursor: pointer; font-size: .78rem; font-weight: 750; }
+.revision-panel { margin-top: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 11px; background: #f8fbf9; }
+.revision-note { margin: 0 0 10px; color: var(--muted); font-size: .76rem; line-height: 1.45; }
+.revision-layout { display: grid; grid-template-columns: minmax(150px, .55fr) minmax(0, 1fr); gap: 12px; }
+.revision-list { display: grid; align-content: start; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.revision-list button { width: 100%; display: grid; gap: 3px; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--ink); cursor: pointer; text-align: left; }
+.revision-list button.selected { border-color: var(--green); background: var(--green-soft); }
+.revision-list span, .revision-list small { color: var(--muted); font-size: .68rem; }
+.revision-comparison { min-width: 0; }
+.revision-comparison > div { margin-bottom: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: white; }
+.revision-comparison h4 { margin: 0 0 7px; font-size: .76rem; }
+.revision-comparison p { margin: 0; white-space: pre-wrap; font-size: .78rem; line-height: 1.45; }
+.revision-comparison .primary-button { width: 100%; padding: 9px 12px; font-size: .76rem; }
 .task-panel { position: sticky; top: 94px; padding: 20px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.86); }
 .task-list { display: grid; gap: 10px; }
 .task-card { padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
@@ -113,5 +127,6 @@ h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 2rem;
   .patient-grid, .glance-grid { grid-template-columns: 1fr; }
   .glance-card { min-height: auto; }
   .glance-section { padding: 18px; }
+  .revision-layout { grid-template-columns: 1fr; }
   .auth-card { padding: 26px 20px; }
 }
