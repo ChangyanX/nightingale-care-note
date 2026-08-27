@@ -24,9 +24,9 @@ This matrix maps the Nightingale Candidate Brief to implementation phases, evide
 | Smart prioritization | Required | Explainable risk, recency, task, entity, confirmation, and feedback factors | Ranking tests and Glance explanation |
 | Fast highlight accept/reject | Required hard constraint | One- or two-action clinician review | Phase 4 acceptance |
 | Highlight risk reason | Required hard constraint | Stored `risk_reason` and visible factors | Provenance and UI tests |
-| Exact highlight provenance | Required hard constraint | Entry, historical version, offsets, and quoted-text match; invalid suggestions rejected | `test_highlight_provenance.py` |
+| Exact highlight provenance | Required hard constraint | Entry, historical version, offsets, quoted-text match, and ambiguity rejection implemented | `test_highlight_provenance.py` |
 | Clinician precedence or conflict review | Required | Clinician-confirmed facts outrank AI; unresolved contradictions are flagged | Conflict tests and demo |
-| Self-learning importance logic | Bonus; committed | Bounded deterministic weight updates from explicit interactions; no RL | `test_self_learning_importance.py` |
+| Self-learning importance logic | Bonus; committed | Bounded deterministic idempotent weight updates and safety floors implemented; persistence pending | `test_self_learning_importance.py` |
 | Hybrid storage / data decay | Bonus; separate milestone | Hot/warm/archive tiers, verified roll-ups, exact source restoration | Phase 6 and `test_data_decay.py` |
 | Ambient patient voice capture | Bonus; out of current scope | Architecture note only | Explicit scope statement |
 | Ambient clinical voice, diarization, noisy audio, multilingual support | Bonus; out of current scope | Architecture note only | Explicit scope statement |

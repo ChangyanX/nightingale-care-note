@@ -1,7 +1,7 @@
 PNPM ?= pnpm
 UV ?= uv
 
-.PHONY: install dev-web dev-api test test-api lint typecheck db-start db-stop db-reset seed-hosted smoke-llm
+.PHONY: install dev-web dev-api test test-api lint typecheck db-start db-stop db-reset seed-hosted smoke-llm release-status release-check
 
 install:
 	$(PNPM) install
@@ -41,3 +41,9 @@ seed-hosted:
 
 smoke-llm:
 	cd services/backend && $(UV) run python -m scripts.run_groq_smoke
+
+release-status:
+	cd services/backend && $(UV) run python -m scripts.release_audit
+
+release-check: lint typecheck test-api
+	cd services/backend && $(UV) run python -m scripts.release_audit --strict

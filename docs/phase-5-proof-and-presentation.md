@@ -1,5 +1,8 @@
 # Phase 5 — Proof and Presentation
 
+The ordered release gates, implementation status, task-level acceptance criteria,
+and evidence locations are maintained in [the Phase 5 task breakdown](phase-5/README.md).
+
 **Full-quality estimate:** 5-7 hours  
 **16-hour critical-path allocation:** 3 hours  
 **Goal:** Turn the working prototype into a reproducible, testable, and persuasive challenge submission.
@@ -68,7 +71,7 @@ Phase 5 integrates all features, removes demo-risk, measures performance, and pr
 | Full integration and regression tests | 1-2 h |
 | Performance measurement and fixes | 1 h |
 | Technical brief, README, attribution | 1-2 h |
-| Demo script, recording, and retakes | 1-2 h |
+| Demo script and retakes | 1-2 h |
 | Deployment verification and final audit | 1 h |
 
 ## Final submission checklist

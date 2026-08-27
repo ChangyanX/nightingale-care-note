@@ -12,7 +12,7 @@ a separate process in the existing Python backend, not a new microservice.
 | [P4-T04](task-04-provider-gateway-and-worker.md) | Provider gateway and worker | Groq adapter/worker core implemented; live run pending key | 1.5 h | 45 min | T02-T03 | Redacted genuine invocation with retry-safe worker |
 | [P4-T05](task-05-ai-entry-and-provenance-persistence.md) | AI entry and provenance persistence | Pending | 1 h | 30 min | T03-T04, Phase 3 schema | Atomic system entry and exact source linkage |
 | [P4-T06](task-06-highlight-review-and-explainability.md) | Highlight review and explainability | Pending | 1 h | 25 min | T05, Phase 3 highlights | Exact suggestions with fast clinician review |
-| [P4-T07](task-07-adaptive-importance-ranking.md) | Adaptive importance ranking | Pending | 1.25 h | 35 min | T06 | Bounded, resettable feedback weights and safety floor |
+| [P4-T07](task-07-adaptive-importance-ranking.md) | Adaptive importance ranking | Pure domain logic implemented; persistence/API pending | 1.25 h | 35 min | T06 | Bounded, resettable feedback weights and safety floor |
 | [P4-T08](task-08-required-tests-and-handoff.md) | Required tests and handoff | Pending | 1 h | 10 min | T01-T07 | Genuine-run, idempotency, provenance, and learning evidence |
 
 **Full Phase 4 estimate:** approximately 8-9 hours  

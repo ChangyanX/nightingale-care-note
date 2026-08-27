@@ -1,9 +1,14 @@
 # Submission Checklist
 
+> **Execution boundary:** This repository may prepare and verify artifacts, but
+> the assistant must not submit or upload them, change repository visibility,
+> or send email. Every final delivery action in this checklist is user-only.
+
 ## Deadline
 
 - **Due:** Friday, August 28, 2026, 5:30 PM SGT/MYT
-- Complete the upload and send the email before the deadline; do not use the deadline as the target time for rendering or uploading.
+- The user must complete any desired upload and email before the deadline; do
+  not use the deadline as the target time for rendering or uploading.
 
 ## Email
 
@@ -31,6 +36,10 @@
 - [ ] WeChat ID
 
 ## Technical release gate
+
+Run `make release-status` during development and `make release-check` from the
+clean final commit. See [Release Status](release-status.md) for evidence that is
+still local-only, hosted-only, live-provider, or manual.
 
 - [ ] All required tests pass from documented commands.
 - [ ] `test_rbac_scope.py` passes.

@@ -168,6 +168,23 @@ make typecheck
 make test
 ```
 
+For a non-strict inventory of release evidence and open gates:
+
+```bash
+make release-status
+```
+
+Before submission, run the strict aggregate check from a clean final commit:
+
+```bash
+make release-check
+```
+
+The strict command intentionally fails while a required test/artifact is
+missing, a tracked credential pattern is detected, or the working tree is dirty.
+Current gate state is documented in
+[docs/release-status.md](docs/release-status.md).
+
 ### Opt-in genuine AI smoke test
 
 Phase 4 uses Groq's free plan with `openai/gpt-oss-20b`. Create a Groq API key,

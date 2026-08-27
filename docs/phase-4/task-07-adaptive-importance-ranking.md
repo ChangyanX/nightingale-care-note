@@ -1,6 +1,6 @@
 # P4-T07 — Adaptive Importance Ranking
 
-**Status:** Pending  
+**Status:** Pure domain logic implemented; event persistence and API integration pending
 **Full estimate:** 1.25 hours  
 **16-hour path:** 35 minutes  
 **Dependencies:** P4-T06
@@ -38,12 +38,12 @@ without training a model or allowing feedback to reduce safety-critical ranking.
 
 ## Acceptance criteria
 
-- [ ] Accepting a topic modestly increases similar future ranking.
-- [ ] Rejecting reduces only the bounded feedback component.
-- [ ] Critical safety and clinician-confirmed floors remain intact.
-- [ ] Reset restores documented defaults.
-- [ ] Factor contributions are visible in API evidence.
-- [ ] `test_self_learning_importance.py` passes.
+- [x] Accepting a topic modestly increases similar future ranking.
+- [x] Rejecting reduces only the bounded feedback component.
+- [x] Critical safety and clinician-confirmed floors remain intact.
+- [x] Reset restores documented defaults.
+- [x] Factor contributions are inspectable in domain output; API exposure remains pending.
+- [x] `test_self_learning_importance.py` passes.
 
 ## Done when
 
