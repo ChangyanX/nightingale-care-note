@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.foundation import router as foundation_router
 from app.api.revisions import router as revisions_router
+from app.api.scribe_jobs import router as scribe_jobs_router
 from app.config import get_settings
 from app.gateway import SupabaseGatewayError
 from app.middleware import RequestIdMiddleware
@@ -26,6 +27,7 @@ app.add_middleware(
 )
 app.include_router(foundation_router)
 app.include_router(revisions_router)
+app.include_router(scribe_jobs_router)
 
 
 @app.exception_handler(SupabaseGatewayError)

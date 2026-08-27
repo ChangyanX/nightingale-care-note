@@ -1,5 +1,8 @@
 # Phase 4 — AI Pipeline
 
+The ordered implementation status, task-level acceptance criteria, estimates,
+and handoff evidence are maintained in [the Phase 4 task breakdown](phase-4/README.md).
+
 **Full-quality estimate:** 7-9 hours  
 **16-hour critical-path allocation:** 3.5 hours  
 **Goal:** Add AI-generated summaries and highlight suggestions without bypassing privacy, provenance, or human review.

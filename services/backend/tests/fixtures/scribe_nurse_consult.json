@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "interaction_type": "nurse_consult",
+  "summary": "Inhaler technique coaching was completed and demonstrated correctly.",
+  "facts": [
+    {
+      "category": "plan",
+      "claim": "The patient demonstrated correct inhaler technique.",
+      "source_quote": "you have demonstrated the inhaler steps correctly"
+    }
+  ],
+  "open_questions": [],
+  "actions": [],
+  "highlights": []
+}

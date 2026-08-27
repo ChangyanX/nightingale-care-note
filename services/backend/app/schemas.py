@@ -151,3 +151,34 @@ class RevertRequest(BaseModel):
     source_version: int = Field(gt=0)
     expected_version: int = Field(gt=0)
     change_reason: str | None = Field(default=None, max_length=500)
+
+
+AiInteractionType = Literal["doctor_consult", "nurse_consult", "ai_patient_session"]
+AiJobStatus = Literal["queued", "processing", "succeeded", "failed", "dead_letter"]
+
+
+class CreateScribeJobRequest(BaseModel):
+    source_record_id: UUID
+    interaction_type: AiInteractionType
+    idempotency_key: str = Field(min_length=8, max_length=200, pattern=r"^[A-Za-z0-9._:-]+$")
+
+
+class ScribeJobResponse(BaseModel):
+    id: UUID
+    clinic_id: UUID
+    patient_id: UUID
+    source_record_id: UUID
+    interaction_type: AiInteractionType
+    requested_by: UUID
+    idempotency_key: str
+    status: AiJobStatus
+    attempt_count: int
+    max_attempts: int
+    available_at: datetime
+    claimed_at: datetime | None
+    lease_expires_at: datetime | None
+    completed_at: datetime | None
+    safe_error_code: str | None
+    output_entry_id: UUID | None
+    created_at: datetime
+    updated_at: datetime

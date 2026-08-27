@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "interaction_type": "doctor_consult",
+  "summary": "Nocturnal cough persists. Inhaler technique review and a seven-day peak-flow diary were agreed.",
+  "facts": [
+    {
+      "category": "symptom",
+      "claim": "Nocturnal cough persists.",
+      "source_quote": "the cough is still waking me at night"
+    }
+  ],
+  "open_questions": [
+    "Does the symptom pattern warrant an earlier review?"
+  ],
+  "actions": [
+    {
+      "title": "Review the seven-day peak-flow diary",
+      "owner_role": "clinician",
+      "urgency": "high",
+      "source_quote": "let us review your peak-flow diary in seven days"
+    }
+  ],
+  "highlights": [
+    {
+      "quoted_text": "the cough is still waking me at night",
+      "normalized_claim": "Persistent nocturnal cough",
+      "risk_level": "attention",
+      "risk_reason": "Persistent nighttime symptoms may need earlier clinical review.",
+      "score": 78.5,
+      "occurrence_hint": 0
+    }
+  ]
+}

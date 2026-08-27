@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "interaction_type": "ai_patient_session",
+  "summary": "The patient reports worsening nighttime cough and asks whether review should occur earlier.",
+  "facts": [
+    {
+      "category": "patient_context",
+      "claim": "Nighttime cough has worsened.",
+      "source_quote": "my cough has been worse at night"
+    }
+  ],
+  "open_questions": [
+    "Should the planned review be brought forward?"
+  ],
+  "actions": [],
+  "highlights": [
+    {
+      "quoted_text": "my cough has been worse at night",
+      "normalized_claim": "Worsening nighttime cough",
+      "risk_level": "attention",
+      "risk_reason": "A worsening symptom trend should be reviewed by the care team.",
+      "score": 75.0,
+      "occurrence_hint": 0
+    }
+  ]
+}

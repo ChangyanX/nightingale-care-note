@@ -49,7 +49,7 @@ Authorization is enforced in the frontend for usability, FastAPI for operation-l
 | Staff and clinicians cannot overwrite each other's notes | Separate role-owned sections and optimistic concurrency | `test_rbac_scope.py`, `test_concurrent_edits.py` |
 | Warm-path Glance P95 at or below 300 ms | Bounded read model, seeded benchmark, at least 100 warm requests | Benchmark report in technical brief |
 | Synthetic data only | Deterministic synthetic seed fixtures | Repository audit and README |
-| Redact names, IC/ID numbers, and phone numbers before LLM | Deterministic redaction and verification before job submission | `test_redaction.py` |
+| Redact names, IC/ID numbers, and phone numbers before LLM | Deterministic redaction and fail-closed verification implemented; provider boundary pending | `test_redaction.py` |
 | Strict redaction for all LLM-bound data streams | One guarded LLM gateway used by all jobs | Integration tests and safe logs |
 | TLS in transit | HTTPS/TLS for web, API, database, storage, and LLM connections | Deployment verification |
 | Encryption at rest | Provider-managed database and private-object encryption | Technical brief documentation |
