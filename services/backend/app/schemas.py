@@ -12,6 +12,8 @@ class HealthResponse(BaseModel):
 
 ClinicRole = Literal["staff", "clinician", "admin"]
 EntryVisibility = Literal["internal", "patient_facing"]
+CareTaskStatus = Literal["open", "in_progress", "completed", "cancelled"]
+CareTaskPriority = Literal["low", "normal", "high", "urgent"]
 ManualEntryType = Literal[
     "staff_note",
     "clinician_note",
@@ -40,6 +42,13 @@ class PatientResponse(BaseModel):
     display_name: str
 
 
+class SourceRecordResponse(BaseModel):
+    id: UUID
+    source_type: str
+    external_reference: str | None
+    occurred_at: datetime
+
+
 class TimelineEntryResponse(BaseModel):
     id: UUID
     clinic_id: UUID
@@ -52,6 +61,39 @@ class TimelineEntryResponse(BaseModel):
     source_record_id: UUID
     current_version: int
     occurred_at: datetime
+    source: SourceRecordResponse | None = None
+
+
+class CareTaskResponse(BaseModel):
+    id: UUID
+    clinic_id: UUID
+    patient_id: UUID
+    source_entry_id: UUID | None
+    title: str
+    assigned_to: UUID | None
+    created_by: UUID
+    status: CareTaskStatus
+    priority: CareTaskPriority
+    due_at: datetime | None
+    completed_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class GlanceItemResponse(BaseModel):
+    kind: Literal["current_concern", "recent_change", "open_action", "patient_question"]
+    claim: str
+    importance_reason: str
+    status: str
+    occurred_at: datetime
+    source_entry_id: UUID
+    task_id: UUID | None = None
+    source: SourceRecordResponse | None = None
+
+
+class GlanceResponse(BaseModel):
+    patient_id: UUID
+    items: list[GlanceItemResponse] = Field(max_length=6)
 
 
 class CreateEntryRequest(BaseModel):

@@ -8,6 +8,10 @@
 
 Phase 2 makes the core product visible. The main page must turn a fragmented record into a readable clinical story. It should be useful without AI: manually seeded and created entries must already support fast orientation, filtering, and action.
 
+The implementation-level task sequence is maintained in
+[the Phase 2 task breakdown](phase-2/README.md). The primary fixture and bounded
+UI/API contract are defined in [the demo patient story](demo-patient-story.md).
+
 ## Required deliverables
 
 - Clinic-scoped patient selector.

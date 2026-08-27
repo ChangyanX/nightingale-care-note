@@ -54,7 +54,7 @@ service-role key.
    values for local Next.js development.
 7. Store the hosted URL and publishable key in each deployment environment as
    described in [Credentials and Access](credentials-and-access.md).
-9. Store the service-role key only in the worker's or setup job's secret
+8. Store the service-role key only in the worker's or setup job's secret
    environment; the web application and normal API request path do not use it.
 
 ## Authorization request path

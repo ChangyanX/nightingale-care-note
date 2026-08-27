@@ -171,6 +171,45 @@ values
   ('a0000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000003', 'clinician', 'created', 'entry', '70000000-0000-0000-0000-000000000002', '{"version":1,"synthetic":true}')
 on conflict (id) do nothing;
 
+insert into public.care_tasks (
+  id, clinic_id, patient_id, source_entry_id, title, assigned_to, created_by,
+  status, priority, due_at, completed_at
+)
+values
+  (
+    'b0000000-0000-0000-0000-000000000001',
+    '10000000-0000-0000-0000-000000000001',
+    '40000000-0000-0000-0000-000000000001',
+    '70000000-0000-0000-0000-000000000002',
+    'Review seven-day peak-flow diary and reassess nocturnal cough',
+    '20000000-0000-0000-0000-000000000003',
+    '20000000-0000-0000-0000-000000000002',
+    'open',
+    'high',
+    '2026-08-31T17:00:00+08:00',
+    null
+  ),
+  (
+    'b0000000-0000-0000-0000-000000000002',
+    '10000000-0000-0000-0000-000000000001',
+    '40000000-0000-0000-0000-000000000001',
+    '70000000-0000-0000-0000-000000000004',
+    'Confirm inhaler-technique coaching was completed',
+    '20000000-0000-0000-0000-000000000002',
+    '20000000-0000-0000-0000-000000000003',
+    'completed',
+    'normal',
+    '2026-08-25T17:00:00+08:00',
+    '2026-08-25T10:15:00+08:00'
+  )
+on conflict (id) do update set
+  title = excluded.title,
+  assigned_to = excluded.assigned_to,
+  status = excluded.status,
+  priority = excluded.priority,
+  due_at = excluded.due_at,
+  completed_at = excluded.completed_at;
+
 insert into storage.buckets (id, name, public, file_size_limit)
 values ('consult-recordings', 'consult-recordings', false, 52428800)
 on conflict (id) do update set public = false, file_size_limit = excluded.file_size_limit;

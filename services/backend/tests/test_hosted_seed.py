@@ -6,6 +6,7 @@ from scripts.seed_hosted import (
     SupabaseAdminClient,
     prepare_credentials,
     project_ref_from_url,
+    seed_foundation,
 )
 
 
@@ -70,3 +71,31 @@ def test_ensure_users_creates_missing_and_rotates_existing_passwords() -> None:
     assert user_ids["ADMIN_A"] == "existing-admin-id"
     assert len([request for request in requests if request.method == "POST"]) == 5
     assert len([request for request in requests if request.method == "PUT"]) == 1
+
+
+def test_hosted_foundation_seed_preserves_story_dates_and_tasks() -> None:
+    calls: dict[str, list[dict[str, object]]] = {}
+
+    class RecordingClient:
+        def upsert(
+            self,
+            table: str,
+            rows: list[dict[str, object]],
+            conflict: str,
+        ) -> None:
+            assert conflict
+            calls[table] = rows
+
+    user_ids = {
+        "ADMIN_A": "20000000-0000-0000-0000-000000000001",
+        "STAFF_A": "20000000-0000-0000-0000-000000000002",
+        "CLINICIAN_A": "20000000-0000-0000-0000-000000000003",
+        "PATIENT_A": "20000000-0000-0000-0000-000000000004",
+        "STAFF_B": "20000000-0000-0000-0000-000000000005",
+        "CLINICIAN_B": "20000000-0000-0000-0000-000000000006",
+    }
+
+    seed_foundation(RecordingClient(), user_ids)  # type: ignore[arg-type]
+
+    assert len({row["occurred_at"] for row in calls["entries"]}) >= 3
+    assert {row["status"] for row in calls["care_tasks"]} == {"open", "completed"}

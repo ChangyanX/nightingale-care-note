@@ -5,7 +5,7 @@ This folder turns the project blueprint into five implementation milestones. Wor
 | Phase | Focus | Estimate | Exit condition |
 |---|---|---:|---|
 | [1. Foundation](phase-1-foundation.md) | Repository, database, auth, RBAC, seed data | 8-10 hours | Security boundaries are proven by automated tests. |
-| [2. Core Patient Experience](phase-2-core-patient-experience.md) | Timeline, patient page, Top Card, tasks, live updates | 7-9 hours | A clinician can understand a synthetic patient record quickly. |
+| [2. Core Patient Experience](phase-2-core-patient-experience.md) ([tasks](phase-2/README.md)) | Timeline, patient page, Top Card, tasks, live updates | 7-9 hours | A clinician can understand a synthetic patient record quickly. |
 | [3. Trust and Collaboration](phase-3-trust-and-collaboration.md) | Comments, versions, provenance, conflicts | 8-10 hours | Every highlight and edit is explainable and traceable. |
 | [4. AI Pipeline](phase-4-ai-pipeline.md) | Redaction, durable jobs, genuine AI summaries, adaptive ranking | 7-9 hours | AI output is safe, structured, traceable, and human-reviewable. |
 | [5. Proof and Presentation](phase-5-proof-and-presentation.md) | Tests, benchmark, documentation, demo | 5-7 hours | The submission can be reproduced and demonstrated reliably. |

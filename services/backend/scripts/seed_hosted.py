@@ -263,6 +263,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "manual",
             "staff-note-001",
             users["STAFF_A"],
+            "2026-08-24T09:00:00+08:00",
         ),
         (
             "60000000-0000-0000-0000-000000000002",
@@ -271,6 +272,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "manual",
             "clinician-note-001",
             users["CLINICIAN_A"],
+            "2026-08-24T09:30:00+08:00",
         ),
         (
             "60000000-0000-0000-0000-000000000003",
@@ -279,6 +281,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "doctor_consult",
             "doctor-consult-001",
             None,
+            "2026-08-24T09:30:00+08:00",
         ),
         (
             "60000000-0000-0000-0000-000000000004",
@@ -287,6 +290,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "nurse_consult",
             "nurse-consult-001",
             None,
+            "2026-08-25T10:00:00+08:00",
         ),
         (
             "60000000-0000-0000-0000-000000000005",
@@ -295,6 +299,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "ai_patient_session",
             "ai-session-001",
             None,
+            "2026-08-26T08:00:00+08:00",
         ),
         (
             "60000000-0000-0000-0000-000000000006",
@@ -303,6 +308,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "manual",
             "patient-instruction-001",
             users["CLINICIAN_A"],
+            "2026-08-24T09:40:00+08:00",
         ),
         (
             "60000000-0000-0000-0000-000000000007",
@@ -311,6 +317,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "manual",
             "patient-insight-001",
             users["PATIENT_A"],
+            "2026-08-26T07:50:00+08:00",
         ),
         (
             "60000000-0000-0000-0000-000000000008",
@@ -319,6 +326,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "manual",
             "clinic-b-note-001",
             users["STAFF_B"],
+            "2026-08-25T11:00:00+08:00",
         ),
     ]
     client.upsert(
@@ -330,11 +338,19 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
                 "patient_id": patient_id,
                 "source_type": source_type,
                 "external_reference": reference,
-                "occurred_at": "2026-08-25T10:00:00+08:00",
+                "occurred_at": occurred_at,
                 "created_by": creator,
                 "metadata": {"synthetic": True},
             }
-            for source_id, clinic_id, patient_id, source_type, reference, creator in sources
+            for (
+                source_id,
+                clinic_id,
+                patient_id,
+                source_type,
+                reference,
+                creator,
+                occurred_at,
+            ) in sources
         ],
         "id",
     )
@@ -351,6 +367,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "internal",
             "Patient called to report that the cough is more frequent at night.",
             "60000000-0000-0000-0000-000000000001",
+            "2026-08-24T09:00:00+08:00",
         ),
         (
             "70000000-0000-0000-0000-000000000002",
@@ -364,6 +381,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "Assessment: persistent nocturnal cough; review inhaler technique "
             "and follow up after peak-flow diary.",
             "60000000-0000-0000-0000-000000000002",
+            "2026-08-24T09:30:00+08:00",
         ),
         (
             "70000000-0000-0000-0000-000000000003",
@@ -377,6 +395,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "Doctor consult summary: nocturnal cough persists; inhaler technique "
             "review and a seven-day peak-flow diary were agreed.",
             "60000000-0000-0000-0000-000000000003",
+            "2026-08-24T09:30:00+08:00",
         ),
         (
             "70000000-0000-0000-0000-000000000004",
@@ -390,6 +409,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "Nurse consult summary: technique coaching completed; patient "
             "demonstrated correct inhaler use.",
             "60000000-0000-0000-0000-000000000004",
+            "2026-08-25T10:00:00+08:00",
         ),
         (
             "70000000-0000-0000-0000-000000000005",
@@ -403,6 +423,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "AI-patient session: patient asks whether the new nighttime symptoms "
             "require an earlier review.",
             "60000000-0000-0000-0000-000000000005",
+            "2026-08-26T08:00:00+08:00",
         ),
         (
             "70000000-0000-0000-0000-000000000006",
@@ -416,6 +437,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "Record peak-flow readings each morning and evening for seven days. "
             "Contact the clinic sooner if breathing worsens.",
             "60000000-0000-0000-0000-000000000006",
+            "2026-08-24T09:40:00+08:00",
         ),
         (
             "70000000-0000-0000-0000-000000000007",
@@ -428,6 +450,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "internal",
             "The cough woke me twice last night and seems worse when the room is cold.",
             "60000000-0000-0000-0000-000000000007",
+            "2026-08-26T07:50:00+08:00",
         ),
         (
             "70000000-0000-0000-0000-000000000008",
@@ -440,6 +463,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "internal",
             "Synthetic Clinic B note used to prove tenant isolation.",
             "60000000-0000-0000-0000-000000000008",
+            "2026-08-25T11:00:00+08:00",
         ),
     ]
     entry_rows = [
@@ -455,7 +479,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "content": content,
             "content_plaintext": content,
             "source_record_id": source_id,
-            "occurred_at": "2026-08-25T10:00:00+08:00",
+            "occurred_at": occurred_at,
         }
         for (
             entry_id,
@@ -468,6 +492,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             visibility,
             content,
             source_id,
+            occurred_at,
         ) in entries
     ]
     client.upsert("entries", entry_rows, "id")
@@ -499,6 +524,38 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
                 "author_id": users["STAFF_A"],
                 "body": "Internal synthetic comment: please confirm the follow-up interval.",
             }
+        ],
+        "id",
+    )
+    client.upsert(
+        "care_tasks",
+        [
+            {
+                "id": "b0000000-0000-0000-0000-000000000001",
+                "clinic_id": CLINIC_A_ID,
+                "patient_id": PATIENT_A_ID,
+                "source_entry_id": "70000000-0000-0000-0000-000000000002",
+                "title": "Review seven-day peak-flow diary and reassess nocturnal cough",
+                "assigned_to": users["CLINICIAN_A"],
+                "created_by": users["STAFF_A"],
+                "status": "open",
+                "priority": "high",
+                "due_at": "2026-08-31T17:00:00+08:00",
+                "completed_at": None,
+            },
+            {
+                "id": "b0000000-0000-0000-0000-000000000002",
+                "clinic_id": CLINIC_A_ID,
+                "patient_id": PATIENT_A_ID,
+                "source_entry_id": "70000000-0000-0000-0000-000000000004",
+                "title": "Confirm inhaler-technique coaching was completed",
+                "assigned_to": users["STAFF_A"],
+                "created_by": users["CLINICIAN_A"],
+                "status": "completed",
+                "priority": "normal",
+                "due_at": "2026-08-25T17:00:00+08:00",
+                "completed_at": "2026-08-25T10:15:00+08:00",
+            },
         ],
         "id",
     )
