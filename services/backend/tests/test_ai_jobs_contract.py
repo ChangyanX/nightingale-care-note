@@ -40,6 +40,18 @@ def test_claim_uses_skip_locked_and_is_worker_only() -> None:
     )
 
 
+def test_worker_failure_transition_is_retry_bounded_and_sanitized() -> None:
+    sql = MIGRATION.read_text(encoding="utf-8").lower()
+
+    assert "create function public.fail_ai_scribe_job" in sql
+    assert "p_safe_error_code !~ '^[a-z0-9_]{1,64}$'" in sql
+    assert "current_job.attempt_count < current_job.max_attempts" in sql
+    assert "when p_retryable then 'dead_letter'" in sql
+    assert "else 'failed'" in sql
+    assert "grant execute on function public.fail_ai_scribe_job" in sql
+    assert "to service_role" in sql
+
+
 def test_source_type_mapping_and_patient_tenancy_are_database_enforced() -> None:
     sql = MIGRATION.read_text(encoding="utf-8").lower()
 

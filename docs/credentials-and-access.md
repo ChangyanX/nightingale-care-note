@@ -14,7 +14,7 @@ credential belongs in Git, screenshots, issue text, chat, or demo recordings.
 | Signed-in user | Email/password at sign-in, then short-lived access token and refresh token | Password manager for the human; Supabase client session storage for tokens | Act only as that user; PostgreSQL RLS evaluates `auth.uid()` |
 | Background worker / controlled setup job | Project URL and service-role key | Worker or one-off job secret store only | Perform explicitly trusted jobs that may bypass RLS |
 | Direct database tooling, if needed | Hosted database connection string/password | Local secret manager or migration CI secret store only | Direct PostgreSQL access; never available to browser code |
-| LLM worker | LLM API key | Worker secret store only | Call the configured model after the redaction gateway |
+| LLM worker | Groq API key | Worker secret store only | Call `openai/gpt-oss-20b` after verified redaction |
 
 The publishable key identifies the Supabase project and is expected to appear
 in browser code. It is not authorization by itself. The service-role key and
@@ -120,6 +120,23 @@ Configure the internal worker separately with:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `LLM_API_KEY`
 - `LLM_MODEL`
+- `LLM_PROVIDER`
+- `LLM_BASE_URL`
+
+For the selected free provider, create the key in the Groq Console, enable Zero
+Data Retention in **Data Controls** when available, and set these values only in
+the ignored root `.env` or worker deployment secrets:
+
+```dotenv
+LLM_PROVIDER=groq
+LLM_API_KEY=<groq-key>
+LLM_MODEL=openai/gpt-oss-20b
+LLM_BASE_URL=https://api.groq.com/openai/v1
+```
+
+The ordinary FastAPI settings class does not load the service-role or LLM key.
+Those fields live in the separately imported worker settings module so a normal
+API process does not receive privileged worker configuration.
 
 If the API and worker share one hosting service, keep them as separate process
 definitions with separate environment-variable scopes. The frontend must

@@ -1,7 +1,7 @@
 PNPM ?= pnpm
 UV ?= uv
 
-.PHONY: install dev-web dev-api test test-api lint typecheck db-start db-stop db-reset seed-hosted
+.PHONY: install dev-web dev-api test test-api lint typecheck db-start db-stop db-reset seed-hosted smoke-llm
 
 install:
 	$(PNPM) install
@@ -38,3 +38,6 @@ db-reset:
 seed-hosted:
 	@test -n "$(PROJECT_REF)" || (echo "Set PROJECT_REF to the hosted Supabase project reference" && exit 1)
 	cd services/backend && $(UV) run python -m scripts.seed_hosted --project-ref "$(PROJECT_REF)"
+
+smoke-llm:
+	cd services/backend && $(UV) run python -m scripts.run_groq_smoke

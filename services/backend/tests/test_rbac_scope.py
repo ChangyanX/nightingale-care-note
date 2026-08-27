@@ -6,9 +6,7 @@ import httpx
 import pytest
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
-FOUNDATION_MIGRATION = (
-    REPOSITORY_ROOT / "supabase" / "migrations" / "202608260001_foundation.sql"
-)
+FOUNDATION_MIGRATION = REPOSITORY_ROOT / "supabase" / "migrations" / "202608260001_foundation.sql"
 
 CLINIC_A_ID = "10000000-0000-0000-0000-000000000001"
 CLINIC_B_ID = "10000000-0000-0000-0000-000000000002"
@@ -88,12 +86,29 @@ def test_admin_has_no_clinical_write_policy() -> None:
 
 def test_backend_does_not_reference_service_role_for_user_routes() -> None:
     app_directory = REPOSITORY_ROOT / "services" / "backend" / "app"
-    combined_source = "\n".join(
-        source.read_text(encoding="utf-8") for source in app_directory.rglob("*.py")
-    )
+    user_route_sources = [
+        app_directory / "config.py",
+        app_directory / "auth.py",
+        app_directory / "gateway.py",
+        app_directory / "main.py",
+        *sorted((app_directory / "api").rglob("*.py")),
+    ]
+    combined_source = "\n".join(source.read_text(encoding="utf-8") for source in user_route_sources)
 
     assert "SUPABASE_SERVICE_ROLE_KEY" not in combined_source
     assert "supabase_service_role_key" not in combined_source
+    assert "LLM_API_KEY" not in combined_source
+    assert "llm_api_key" not in combined_source
+
+
+def test_privileged_keys_are_scoped_to_worker_settings() -> None:
+    worker_config = (REPOSITORY_ROOT / "services/backend/app/worker/config.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "supabase_service_role_key" in worker_config
+    assert "llm_api_key" in worker_config
+    assert "SecretStr" in worker_config
 
 
 class LiveRlsClient:

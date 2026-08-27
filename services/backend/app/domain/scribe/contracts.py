@@ -30,8 +30,8 @@ class ExtractedFact(_StrictContract):
 
 class ProposedAction(_StrictContract):
     title: BoundedText = Field(max_length=300)
-    owner_role: Literal["staff", "clinician"] | None = None
-    urgency: Literal["low", "normal", "high", "urgent"] = "normal"
+    owner_role: Literal["staff", "clinician", "unassigned"]
+    urgency: Literal["low", "normal", "high", "urgent"]
     source_quote: BoundedText = Field(max_length=1_000)
 
 
@@ -41,17 +41,17 @@ class ProposedHighlight(_StrictContract):
     risk_level: ScribeRiskLevel = Field(strict=False)
     risk_reason: BoundedText = Field(max_length=500)
     score: float = Field(ge=0, le=100)
-    occurrence_hint: int | None = Field(default=None, ge=0)
+    occurrence_hint: int = Field(ge=-1)
 
 
 class ScribeOutput(_StrictContract):
     schema_version: Literal["1.0"]
     interaction_type: ScribeInteractionType = Field(strict=False)
     summary: BoundedText = Field(max_length=4_000)
-    facts: list[ExtractedFact] = Field(default_factory=list, max_length=20)
-    open_questions: list[BoundedText] = Field(default_factory=list, max_length=10)
-    actions: list[ProposedAction] = Field(default_factory=list, max_length=10)
-    highlights: list[ProposedHighlight] = Field(default_factory=list, max_length=10)
+    facts: list[ExtractedFact] = Field(max_length=20)
+    open_questions: list[BoundedText] = Field(max_length=10)
+    actions: list[ProposedAction] = Field(max_length=10)
+    highlights: list[ProposedHighlight] = Field(max_length=10)
 
     @model_validator(mode="after")
     def reject_duplicates(self) -> Self:

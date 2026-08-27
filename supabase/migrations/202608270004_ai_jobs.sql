@@ -251,6 +251,60 @@ begin
 end;
 $$;
 
+create function public.fail_ai_scribe_job(
+  p_job_id uuid,
+  p_safe_error_code text,
+  p_retryable boolean,
+  p_retry_delay_seconds integer default 30
+)
+returns public.ai_jobs
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+declare
+  current_job public.ai_jobs;
+  failed_job public.ai_jobs;
+begin
+  if p_safe_error_code !~ '^[a-z0-9_]{1,64}$'
+     or p_retry_delay_seconds not between 0 and 3600 then
+    raise exception using errcode = '22023', message = 'Invalid safe failure metadata';
+  end if;
+
+  select * into current_job
+  from public.ai_jobs
+  where id = p_job_id
+  for update;
+
+  if not found or current_job.status <> 'processing' then
+    raise exception using errcode = 'P0002', message = 'Processing AI job not found';
+  end if;
+
+  if p_retryable and current_job.attempt_count < current_job.max_attempts then
+    update public.ai_jobs
+    set status = 'queued',
+        available_at = now() + make_interval(secs => p_retry_delay_seconds),
+        claimed_at = null,
+        lease_expires_at = null,
+        safe_error_code = null
+    where id = current_job.id
+    returning * into failed_job;
+  else
+    update public.ai_jobs
+    set status = case
+          when p_retryable then 'dead_letter'::public.ai_job_status
+          else 'failed'::public.ai_job_status
+        end,
+        completed_at = now(),
+        safe_error_code = p_safe_error_code
+    where id = current_job.id
+    returning * into failed_job;
+  end if;
+
+  return failed_job;
+end;
+$$;
+
 revoke all on function public.submit_ai_scribe_job(
   uuid, uuid, public.ai_interaction_type, text
 ) from public;
@@ -260,6 +314,9 @@ grant execute on function public.submit_ai_scribe_job(
 
 revoke all on function public.claim_ai_scribe_job(integer) from public;
 grant execute on function public.claim_ai_scribe_job(integer) to service_role;
+
+revoke all on function public.fail_ai_scribe_job(uuid, text, boolean, integer) from public;
+grant execute on function public.fail_ai_scribe_job(uuid, text, boolean, integer) to service_role;
 
 alter table public.ai_jobs force row level security;
 

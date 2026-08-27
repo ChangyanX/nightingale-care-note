@@ -50,7 +50,7 @@ Authorization is enforced in the frontend for usability, FastAPI for operation-l
 | Warm-path Glance P95 at or below 300 ms | Bounded read model, seeded benchmark, at least 100 warm requests | Benchmark report in technical brief |
 | Synthetic data only | Deterministic synthetic seed fixtures | Repository audit and README |
 | Redact names, IC/ID numbers, and phone numbers before LLM | Deterministic redaction and fail-closed verification implemented; provider boundary pending | `test_redaction.py` |
-| Strict redaction for all LLM-bound data streams | One guarded LLM gateway used by all jobs | Integration tests and safe logs |
+| Strict redaction for all LLM-bound data streams | Verified-redaction type required by Groq/fake provider boundary and worker | Provider/worker integration tests and safe logs |
 | TLS in transit | HTTPS/TLS for web, API, database, storage, and LLM connections | Deployment verification |
 | Encryption at rest | Provider-managed database and private-object encryption | Technical brief documentation |
 | Clean logs | No raw clinical bodies, secrets, or unredacted prompts | Log review test/checklist |

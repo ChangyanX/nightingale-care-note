@@ -94,6 +94,7 @@ def test_json_schema_is_strict_and_provider_neutral() -> None:
     schema = ScribeOutput.model_json_schema()
 
     assert schema["additionalProperties"] is False
+    assert set(schema["required"]) == set(schema["properties"])
     assert schema["properties"]["schema_version"]["const"] == "1.0"
     assert "clinic_id" not in schema["properties"]
     assert "patient_id" not in schema["properties"]

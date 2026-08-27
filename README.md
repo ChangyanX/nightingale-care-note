@@ -168,6 +168,24 @@ make typecheck
 make test
 ```
 
+### Opt-in genuine AI smoke test
+
+Phase 4 uses Groq's free plan with `openai/gpt-oss-20b`. Create a Groq API key,
+enable Zero Data Retention in Groq Data Controls when available, and put the key
+only in the Git-ignored root `.env` as `LLM_API_KEY`. Do not paste it into
+Swagger, browser configuration, Git, chat, or terminal arguments.
+
+Run one genuine call over the committed synthetic transcript:
+
+```bash
+make smoke-llm
+```
+
+The command performs deterministic redaction before invoking Groq strict JSON
+schema mode. Its output contains only provider/model/request/token/count
+metadata and never prints the source or generated clinical text. It does not
+yet persist the result; durable entry/highlight persistence is P4-T05.
+
 ## Security boundaries
 
 Normal API requests forward the caller's Supabase JWT to the Data API so PostgreSQL RLS evaluates the real caller. The service-role credential is reserved for the internal worker and administrative setup. Patient-facing queries use dedicated restricted views and never fetch internal comments or raw AI-scribed notes.

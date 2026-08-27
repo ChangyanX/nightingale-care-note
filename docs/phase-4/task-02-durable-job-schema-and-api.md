@@ -1,6 +1,6 @@
 # P4-T02 — Durable Job Schema and API
 
-**Status:** Submission/claim implemented; retry transitions and hosted concurrency pending  
+**Status:** Submission, claim, and failure transitions implemented; hosted concurrency pending
 **Full estimate:** 1.25 hours  
 **16-hour path:** 30 minutes  
 **Dependencies:** P4-T01, Phase 1 RLS
@@ -42,7 +42,7 @@ status endpoints without exposing worker credentials or raw model payloads.
 - [x] Schema/RPC contracts reject a cross-clinic source record.
 - [x] RLS contracts keep admin read-only and deny patient job access.
 - [ ] Two workers cannot claim the same job.
-- [ ] Failed jobs retry within the configured cap and then dead-letter safely.
+- [x] Failure transition contracts retry within the configured cap and then dead-letter safely.
 - [x] Status API is bounded and reveals no clinical or provider payload.
 
 ## Done when

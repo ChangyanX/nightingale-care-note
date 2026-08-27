@@ -1,6 +1,6 @@
 # P4-T04 — Provider Gateway and Worker
 
-**Status:** Pending; live provider/model selection required before genuine run  
+**Status:** Groq adapter and worker core implemented; genuine run pending API key
 **Full estimate:** 1.5 hours  
 **16-hour path:** 45 minutes  
 **Dependencies:** P4-T02, P4-T03
@@ -38,16 +38,17 @@ redacted text, requests structured output, and records only safe operational met
 
 ## Acceptance criteria
 
-- [ ] Fake-provider worker tests run fully offline.
-- [ ] No provider call occurs when redaction verification fails.
+- [x] Fake-provider worker tests run fully offline.
+- [x] No provider call occurs when redaction verification fails.
 - [ ] Transient failures reschedule; permanent failures terminate safely.
-- [ ] A stopped claim becomes eligible after the recovery timeout.
+- [x] Migration contracts make a stopped claim eligible after the recovery timeout.
 - [ ] One genuine run records provider/model/time evidence without recording raw content.
 
-## Decision needed before live run
+## Selected provider
 
-Choose the live provider/model and supply its key through the ignored root `.env`
-or deployment secret store. This decision is intentionally isolated to the adapter.
+Use Groq's free plan with `openai/gpt-oss-20b` and strict JSON Schema mode.
+Supply the key through the ignored root `.env` or worker deployment secret store,
+and enable Groq Zero Data Retention when available.
 
 ## Done when
 
