@@ -17,4 +17,8 @@ The adaptive importance mechanism in Phase 4 is not reinforcement learning. It u
 
 For architecture, data-model, and security details, see [the project blueprint](blueprint.md).
 
+Hosted Supabase setup and the credential boundary are defined in
+[Supabase Setup](supabase-setup.md) and
+[Credentials and Access](credentials-and-access.md).
+
 Use [the requirements traceability matrix](requirements-traceability.md) during implementation and [the submission checklist](submission-checklist.md) before delivery.
