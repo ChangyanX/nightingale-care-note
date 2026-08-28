@@ -54,6 +54,7 @@ export default function PatientPage() {
       if (!token) { router.replace("/sign-in"); return; }
       try {
         const user = await apiGet<CurrentUser>("/me", token);
+        if (user.account_kind === "patient") { router.replace("/patient"); return; }
         const clinicId = user.memberships[0]?.clinic_id;
         const [patient, glance, timeline, tasks, highlights, comments, jobs, jobEvents, providerUsage, preferences] = await Promise.all([
           apiGet<Patient>(`/patients/${patientId}`, token),

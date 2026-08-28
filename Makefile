@@ -1,7 +1,7 @@
 PNPM ?= pnpm
 UV ?= uv
 
-.PHONY: install dev-web dev-api test test-api lint typecheck generate-api db-start db-stop db-reset seed-hosted smoke-llm release-status release-check
+.PHONY: install dev-web dev-api test test-api lint typecheck generate-api db-start db-stop db-reset seed-hosted smoke-llm benchmark-glance release-status release-check
 
 install:
 	$(PNPM) install
@@ -50,6 +50,10 @@ smoke-llm-nurse:
 
 smoke-llm-patient:
 	cd services/backend && $(UV) run python -m scripts.run_groq_smoke --interaction-type ai_patient_session
+
+benchmark-glance:
+	@test -n "$(PATIENT_ID)" || (echo "Set PATIENT_ID to a synthetic demo patient UUID" && exit 1)
+	cd services/backend && $(UV) run python -m scripts.benchmark_glance --patient-id "$(PATIENT_ID)" --enforce-target
 
 release-status:
 	cd services/backend && $(UV) run python -m scripts.release_audit

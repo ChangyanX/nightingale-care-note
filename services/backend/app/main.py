@@ -2,8 +2,10 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.api.account import router as account_router
 from app.api.collaboration import router as collaboration_router
 from app.api.foundation import router as foundation_router
+from app.api.patient_portal import router as patient_portal_router
 from app.api.revisions import router as revisions_router
 from app.api.scribe_jobs import router as scribe_jobs_router
 from app.config import get_settings
@@ -28,6 +30,8 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
 )
 app.include_router(foundation_router)
+app.include_router(account_router)
+app.include_router(patient_portal_router)
 app.include_router(collaboration_router)
 app.include_router(revisions_router)
 app.include_router(scribe_jobs_router)

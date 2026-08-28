@@ -30,6 +30,8 @@ This matrix maps the Nightingale Candidate Brief to implementation phases, evide
 | Hybrid storage / data decay | Bonus; separate milestone | Hot/warm/archive tiers, verified roll-ups, exact source restoration | Phase 6 and `test_data_decay.py` |
 | Ambient patient voice capture | Bonus; out of current scope | Architecture note only | Explicit scope statement |
 | Ambient clinical voice, diarization, noisy audio, multilingual support | Bonus; out of current scope | Architecture note only | Explicit scope statement |
+| Role-aware global header/account settings | Requested extension | Notification Centre, persisted system-aware theme, avatar menu, own-profile/avatar/password/logout settings | `role-flows.spec.ts`, `visual.spec.ts`, `test_role_portal_api.py` |
+| Patient own-account dashboard | Requested extension; lightweight | Released care summary/instructions/reports, requests, symptoms, non-diagnostic question capture, own history, safe trends | Dedicated `/patient` UI and `/patient/dashboard` DTO |
 
 ## Authorization requirements
 
@@ -47,7 +49,7 @@ Authorization is enforced in the frontend for usability, FastAPI for operation-l
 | Constraint | Plan | Evidence |
 |---|---|---|
 | Staff and clinicians cannot overwrite each other's notes | Separate role-owned sections and optimistic concurrency | `test_rbac_scope.py`, `test_concurrent_edits.py` |
-| Warm-path Glance P95 at or below 300 ms | Bounded read model, seeded benchmark, at least 100 warm requests | Benchmark report in technical brief |
+| Warm-path Glance P95 at or below 300 ms | Bounded read model; concurrent timeline/task fetch; 120-request approximation plus live benchmark | `test_glance_performance.py`, `scripts/benchmark_glance.py`; hosted result still required |
 | Synthetic data only | Deterministic synthetic seed fixtures | Repository audit and README |
 | Redact names, IC/ID numbers, and phone numbers before LLM | Deterministic redaction and fail-closed verification implemented; provider boundary pending | `test_redaction.py` |
 | Strict redaction for all LLM-bound data streams | Verified-redaction type required by Groq/fake provider boundary and worker | Provider/worker integration tests and safe logs |
@@ -65,6 +67,9 @@ Authorization is enforced in the frontend for usability, FastAPI for operation-l
 | `test_concurrent_edits.py` | Different-section edits do not overwrite; same-section conflict is deterministic |
 | `test_self_learning_importance.py` | Interaction increases similar future priority; bounded safety floor |
 | `test_data_decay.py` | Bonus: safe eligibility, archive verification, restoration, and provenance preservation |
+| `test_role_portal_api.py` | Patient route/list denial; safe DTO; guessed restricted IDs; cross-scope/profile/notification contracts |
+| `test_glance_performance.py` | Deterministic percentiles and 120-request warm in-process P95 approximation |
+| `role-flows.spec.ts` / `visual.spec.ts` | Patient landing without patient-list request, global logout, password visibility, theme persistence |
 
 ## Deliverables
 
@@ -99,3 +104,5 @@ Authorization is enforced in the frontend for usability, FastAPI for operation-l
 - Implement hybrid storage/data decay as a separate Phase 6 milestone after the core submission is stable.
 - Keep admin clinical access read-only unless the same user also holds a clinician membership.
 - Keep ambient voice capture out of the current implementation scope.
+- Keep appointment booking and patient AI chat intentionally lightweight;
+  Care Note trust, provenance, collaboration, and RBAC remain primary.

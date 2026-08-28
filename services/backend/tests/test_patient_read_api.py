@@ -26,6 +26,9 @@ class PatientReadGateway:
     ) -> list[dict[str, Any]]:
         assert access_token == "caller-token"
         self.selected_tables.append(table)
+        if table == "clinic_memberships":
+            assert params["profile_id"] == f"eq.{USER_ID}"
+            return [{"clinic_id": CLINIC_ID, "role": "staff"}]
         if table == "patients":
             if not self.patient_visible:
                 return []
@@ -230,4 +233,4 @@ async def test_inaccessible_patient_stops_before_internal_reads(
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Patient not found"}
-    assert fake.selected_tables == ["patients"]
+    assert fake.selected_tables == ["clinic_memberships", "patients"]

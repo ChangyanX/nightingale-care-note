@@ -7,9 +7,11 @@ import os
 import secrets
 import string
 from dataclasses import dataclass
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
+from uuid import NAMESPACE_URL, uuid5
 
 import httpx
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -22,9 +24,13 @@ CLINIC_B_ID = "10000000-0000-0000-0000-000000000002"
 PATIENT_A_ID = "40000000-0000-0000-0000-000000000001"
 PATIENT_A2_ID = "40000000-0000-0000-0000-000000000002"
 PATIENT_B_ID = "40000000-0000-0000-0000-000000000003"
+PATIENT_A3_ID = "40000000-0000-0000-0000-000000000004"
+PATIENT_B2_ID = "40000000-0000-0000-0000-000000000005"
 CARE_NOTE_A_ID = "50000000-0000-0000-0000-000000000001"
 CARE_NOTE_A2_ID = "50000000-0000-0000-0000-000000000002"
 CARE_NOTE_B_ID = "50000000-0000-0000-0000-000000000003"
+CARE_NOTE_A3_ID = "50000000-0000-0000-0000-000000000004"
+CARE_NOTE_B2_ID = "50000000-0000-0000-0000-000000000005"
 
 
 class HostedSeedSettings(BaseSettings):
@@ -45,6 +51,29 @@ class DemoIdentity:
     display_name: str
 
 
+@dataclass(frozen=True)
+class PatientStory:
+    key: str
+    patient_id: str
+    clinic_id: str
+    care_note_id: str
+    patient_user_key: str
+    staff_user_key: str
+    clinician_user_key: str
+    patient_update: str
+    staff_note: str
+    clinician_note_v1: str
+    clinician_note_v2: str
+    doctor_summary: str
+    nurse_summary: str
+    ai_patient_summary: str
+    patient_instruction: str
+    patient_summary: str
+    risk_quote: str
+    risk_reason: str
+    task_title: str
+
+
 IDENTITIES = (
     DemoIdentity("ADMIN_A", "admin.a@nightingale-demo.invalid", "Avery Admin"),
     DemoIdentity("STAFF_A", "staff.a@nightingale-demo.invalid", "Sam Staff"),
@@ -60,7 +89,140 @@ IDENTITIES = (
         "clinician.b@nightingale-demo.invalid",
         "Dr. Jordan Clinician",
     ),
+    DemoIdentity(
+        "PATIENT_A2",
+        "patient.a2@nightingale-demo.invalid",
+        "Morgan Example (Synthetic)",
+    ),
+    DemoIdentity(
+        "PATIENT_B",
+        "patient.b@nightingale-demo.invalid",
+        "Riley Example (Synthetic)",
+    ),
+    DemoIdentity(
+        "PATIENT_A3",
+        "patient.a3@nightingale-demo.invalid",
+        "Jamie Sample (Synthetic)",
+    ),
+    DemoIdentity(
+        "PATIENT_B2",
+        "patient.b2@nightingale-demo.invalid",
+        "Quinn Sample (Synthetic)",
+    ),
 )
+
+
+RICH_STORIES = (
+    PatientStory(
+        "parker",
+        PATIENT_A_ID,
+        CLINIC_A_ID,
+        CARE_NOTE_A_ID,
+        "PATIENT_A",
+        "STAFF_A",
+        "CLINICIAN_A",
+        "Synthetic patient update: the cough woke me twice during the night.",
+        "Synthetic staff note: the peak-flow diary follow-up remains open.",
+        "Synthetic clinician draft: review nocturnal cough and inhaler technique.",
+        "Synthetic clinician note: review cough, technique, and the seven-day diary.",
+        "Doctor consult summary: nocturnal cough persists and needs planned follow-up.",
+        "Nurse consult summary: inhaler technique coaching was completed.",
+        "AI-patient session summary: patient asked whether to request earlier review.",
+        "Record morning and evening peak flow for seven synthetic days.",
+        "Your care team is reviewing the synthetic nighttime cough pattern.",
+        "nocturnal cough persists and needs planned follow-up",
+        "The synthetic nighttime pattern remains unresolved.",
+        "Review seven-day peak-flow diary",
+    ),
+    PatientStory(
+        "morgan",
+        PATIENT_A2_ID,
+        CLINIC_A_ID,
+        CARE_NOTE_A2_ID,
+        "PATIENT_A2",
+        "STAFF_A",
+        "CLINICIAN_A",
+        "Synthetic patient update: morning headaches have occurred on three days this week.",
+        "Synthetic staff note: the home-reading diary was received for follow-up.",
+        "Synthetic clinician draft: review variable morning readings.",
+        "Synthetic clinician note: review morning readings and repeat the validated diary.",
+        "Doctor consult summary: elevated morning readings require timely review.",
+        "Nurse consult summary: cuff positioning and diary technique were reviewed.",
+        "AI-patient session summary: patient asked how to record readings consistently.",
+        "Record morning readings after five minutes seated rest for seven days.",
+        "Your care team is reviewing your synthetic home-reading diary.",
+        "elevated morning readings require timely review",
+        "Repeated synthetic readings remain unresolved.",
+        "Review repeat home-reading diary",
+    ),
+    PatientStory(
+        "riley",
+        PATIENT_B_ID,
+        CLINIC_B_ID,
+        CARE_NOTE_B_ID,
+        "PATIENT_B",
+        "STAFF_B",
+        "CLINICIAN_B",
+        "Synthetic patient update: knee stiffness settles after gentle movement.",
+        "Synthetic staff note: afternoon physiotherapy availability was checked.",
+        "Synthetic clinician draft: mechanical symptoms without acute injury.",
+        "Synthetic clinician note: assess function after the activity trial.",
+        "Doctor consult summary: difficulty on stairs needs planned functional review.",
+        "Nurse consult summary: pacing and the symptom diary were reviewed.",
+        "AI-patient session summary: patient asked which activities to record.",
+        "Use gentle movement and record a daily synthetic symptom score.",
+        "Your care team recommends a short activity and symptom diary.",
+        "difficulty on stairs needs planned functional review",
+        "Synthetic functional change remains unresolved.",
+        "Review knee symptom and activity diary",
+    ),
+    PatientStory(
+        "jamie",
+        PATIENT_A3_ID,
+        CLINIC_A_ID,
+        CARE_NOTE_A3_ID,
+        "PATIENT_A3",
+        "STAFF_A",
+        "CLINICIAN_A",
+        "Synthetic patient update: sleep averaged five hours during a study week.",
+        "Synthetic staff note: a non-urgent wellbeing check was requested.",
+        "Synthetic clinician draft: short sleep after schedule disruption.",
+        "Synthetic clinician note: review sleep trend and daytime impact.",
+        "Doctor consult summary: daytime fatigue should be reassessed after the log.",
+        "Nurse consult summary: sleep-log instructions were discussed.",
+        "AI-patient session summary: patient asked how to track daytime energy.",
+        "Keep a seven-night synthetic sleep and daytime-energy log.",
+        "Your care team is reviewing a temporary synthetic sleep change.",
+        "daytime fatigue should be reassessed",
+        "The synthetic fatigue trend remains unconfirmed.",
+        "Review seven-night sleep and energy log",
+    ),
+    PatientStory(
+        "quinn",
+        PATIENT_B2_ID,
+        CLINIC_B_ID,
+        CARE_NOTE_B2_ID,
+        "PATIENT_B2",
+        "STAFF_B",
+        "CLINICIAN_B",
+        "Synthetic patient update: seasonal nasal symptoms are worse outdoors.",
+        "Synthetic staff note: the non-prescription product list was collected.",
+        "Synthetic clinician draft: seasonal pattern without breathing difficulty.",
+        "Synthetic clinician note: review response to the agreed measures.",
+        "Doctor consult summary: symptoms disrupting sleep need follow-up.",
+        "Nurse consult summary: trigger diary instructions were reviewed.",
+        "AI-patient session summary: patient asked when to contact the clinic.",
+        "Follow the released synthetic plan and record seasonal triggers.",
+        "Your care team has released a synthetic seasonal-symptom plan.",
+        "symptoms disrupting sleep need follow-up",
+        "Synthetic sleep disruption remains unresolved.",
+        "Review seasonal symptom and trigger diary",
+    ),
+)
+
+
+def demo_uuid(label: str) -> str:
+    return str(uuid5(NAMESPACE_URL, f"nightingale-care-note:{label}"))
 
 
 def generate_password() -> str:
@@ -194,7 +356,18 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
     client.upsert(
         "profiles",
         [
-            {"id": users[identity.key], "display_name": identity.display_name}
+            {
+                "id": users[identity.key],
+                "display_name": identity.display_name,
+                "preferred_name": identity.display_name,
+                "birth_date": {
+                    "PATIENT_A": "1991-04-12",
+                    "PATIENT_A2": "1986-09-03",
+                    "PATIENT_B": "1978-01-21",
+                    "PATIENT_A3": "2001-06-17",
+                    "PATIENT_B2": "1994-11-28",
+                }.get(identity.key),
+            }
             for identity in IDENTITIES
         ],
         "id",
@@ -231,16 +404,30 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             {
                 "id": PATIENT_A2_ID,
                 "clinic_id": CLINIC_A_ID,
-                "linked_profile_id": None,
+                "linked_profile_id": users["PATIENT_A2"],
                 "synthetic_identifier": "SYN-A-002",
-                "display_name": "Morgan Example",
+                "display_name": "Morgan Example (Synthetic)",
             },
             {
                 "id": PATIENT_B_ID,
                 "clinic_id": CLINIC_B_ID,
-                "linked_profile_id": None,
+                "linked_profile_id": users["PATIENT_B"],
                 "synthetic_identifier": "SYN-B-001",
-                "display_name": "Riley Example",
+                "display_name": "Riley Example (Synthetic)",
+            },
+            {
+                "id": PATIENT_A3_ID,
+                "clinic_id": CLINIC_A_ID,
+                "linked_profile_id": users["PATIENT_A3"],
+                "synthetic_identifier": "SYN-A-003",
+                "display_name": "Jamie Sample (Synthetic)",
+            },
+            {
+                "id": PATIENT_B2_ID,
+                "clinic_id": CLINIC_B_ID,
+                "linked_profile_id": users["PATIENT_B2"],
+                "synthetic_identifier": "SYN-B-002",
+                "display_name": "Quinn Sample (Synthetic)",
             },
         ],
         "id",
@@ -251,6 +438,8 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             {"id": CARE_NOTE_A_ID, "clinic_id": CLINIC_A_ID, "patient_id": PATIENT_A_ID},
             {"id": CARE_NOTE_A2_ID, "clinic_id": CLINIC_A_ID, "patient_id": PATIENT_A2_ID},
             {"id": CARE_NOTE_B_ID, "clinic_id": CLINIC_B_ID, "patient_id": PATIENT_B_ID},
+            {"id": CARE_NOTE_A3_ID, "clinic_id": CLINIC_A_ID, "patient_id": PATIENT_A3_ID},
+            {"id": CARE_NOTE_B2_ID, "clinic_id": CLINIC_B_ID, "patient_id": PATIENT_B2_ID},
         ],
         "id",
     )
@@ -338,6 +527,45 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "2026-08-25T16:00:00+08:00",
         ),
     ]
+    source_specs = (
+        ("patient_update", "manual", "patient", "2026-08-18T08:10:00+08:00"),
+        ("staff_note", "manual", "staff", "2026-08-19T10:20:00+08:00"),
+        ("clinician_note", "manual", "clinician", "2026-08-20T14:00:00+08:00"),
+        ("doctor_session", "doctor_consult", "system", "2026-08-20T14:05:00+08:00"),
+        ("nurse_session", "nurse_consult", "system", "2026-08-21T11:15:00+08:00"),
+        (
+            "ai_patient_session",
+            "ai_patient_session",
+            "system",
+            "2026-08-22T19:30:00+08:00",
+        ),
+        (
+            "patient_instruction",
+            "manual",
+            "clinician",
+            "2026-08-20T14:15:00+08:00",
+        ),
+        ("patient_summary", "manual", "clinician", "2026-08-23T09:00:00+08:00"),
+    )
+    for story in RICH_STORIES:
+        author_ids = {
+            "patient": users[story.patient_user_key],
+            "staff": users[story.staff_user_key],
+            "clinician": users[story.clinician_user_key],
+            "system": None,
+        }
+        for kind, source_type, author_kind, occurred_at in source_specs:
+            sources.append(
+                (
+                    demo_uuid(f"{story.key}:source:{kind}"),
+                    story.clinic_id,
+                    story.patient_id,
+                    source_type,
+                    f"synthetic-{story.key}-{kind}",
+                    author_ids[author_kind],
+                    occurred_at,
+                )
+            )
     client.upsert(
         "source_records",
         [
@@ -489,6 +717,80 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "2026-08-25T16:00:00+08:00",
         ),
     ]
+    entry_specs = (
+        ("patient_update", "patient", "patient_insight", "internal", "patient_update"),
+        ("staff_note", "staff", "staff_note", "internal", "staff_note"),
+        (
+            "clinician_note",
+            "clinician",
+            "clinician_note",
+            "internal",
+            "clinician_note_v2",
+        ),
+        (
+            "doctor_session",
+            "system",
+            "ai_doctor_consult_summary",
+            "internal",
+            "doctor_summary",
+        ),
+        (
+            "nurse_session",
+            "system",
+            "ai_nurse_consult_summary",
+            "internal",
+            "nurse_summary",
+        ),
+        (
+            "ai_patient_session",
+            "system",
+            "ai_patient_session_summary",
+            "internal",
+            "ai_patient_summary",
+        ),
+        (
+            "patient_instruction",
+            "clinician",
+            "patient_instruction",
+            "patient_facing",
+            "patient_instruction",
+        ),
+        (
+            "patient_summary",
+            "clinician",
+            "patient_summary",
+            "patient_facing",
+            "patient_summary",
+        ),
+    )
+    occurred_by_kind = {spec[0]: spec[3] for spec in source_specs}
+    revised_entry_ids: set[str] = set()
+    for story in RICH_STORIES:
+        author_ids = {
+            "patient": users[story.patient_user_key],
+            "staff": users[story.staff_user_key],
+            "clinician": users[story.clinician_user_key],
+            "system": None,
+        }
+        for kind, author_role, entry_type, visibility, content_field in entry_specs:
+            entry_id = demo_uuid(f"{story.key}:entry:{kind}")
+            if kind == "clinician_note":
+                revised_entry_ids.add(entry_id)
+            entries.append(
+                (
+                    entry_id,
+                    story.clinic_id,
+                    story.patient_id,
+                    story.care_note_id,
+                    author_ids[author_role],
+                    author_role,
+                    entry_type,
+                    visibility,
+                    getattr(story, content_field),
+                    demo_uuid(f"{story.key}:source:{kind}"),
+                    occurred_by_kind[kind],
+                )
+            )
     entry_rows = [
         {
             "id": entry_id,
@@ -503,6 +805,7 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             "content_plaintext": content,
             "source_record_id": source_id,
             "occurred_at": occurred_at,
+            "current_version": 2 if entry_id in revised_entry_ids else 1,
         }
         for (
             entry_id,
@@ -519,23 +822,105 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
         ) in entries
     ]
     client.upsert("entries", entry_rows, "id")
-    client.upsert(
-        "entry_versions",
-        [
+    entry_versions = [
             {
                 "id": f"c{str(row['id'])[1:]}",
                 "clinic_id": row["clinic_id"],
                 "patient_id": row["patient_id"],
                 "entry_id": row["id"],
                 "version_number": 1,
-                "content_snapshot": row["content"],
+                "content_snapshot": next(
+                    (
+                        story.clinician_note_v1
+                        for story in RICH_STORIES
+                        if row["id"] == demo_uuid(f"{story.key}:entry:clinician_note")
+                    ),
+                    row["content"],
+                ),
                 "changed_by": row["author_id"],
                 "changed_by_role": row["author_role"],
                 "change_reason": "Initial hosted synthetic version",
             }
             for row in entry_rows
+        ]
+    for story in RICH_STORIES:
+        entry_versions.append(
+            {
+                "id": demo_uuid(f"{story.key}:entry-version:clinician_note:2"),
+                "clinic_id": story.clinic_id,
+                "patient_id": story.patient_id,
+                "entry_id": demo_uuid(f"{story.key}:entry:clinician_note"),
+                "version_number": 2,
+                "content_snapshot": story.clinician_note_v2,
+                "changed_by": users[story.clinician_user_key],
+                "changed_by_role": "clinician",
+                "change_reason": "Synthetic revision: added explicit follow-up detail",
+            }
+        )
+    client.upsert("entry_versions", entry_versions, "entry_id,version_number")
+    section_rows: list[dict[str, Any]] = []
+    for story in RICH_STORIES:
+        section_specs = (
+            (
+                "staff_note",
+                "staff",
+                users[story.staff_user_key],
+                "internal",
+                "Synthetic coordination status: the follow-up workflow is open.",
+            ),
+            (
+                "assessment",
+                "clinician",
+                users[story.clinician_user_key],
+                "internal",
+                story.clinician_note_v2,
+            ),
+            (
+                "plan",
+                "clinician",
+                users[story.clinician_user_key],
+                "internal",
+                f"{story.task_title}; confirm at the next review.",
+            ),
+            (
+                "patient_instruction",
+                "clinician",
+                users[story.clinician_user_key],
+                "patient_facing",
+                story.patient_instruction,
+            ),
+        )
+        for section_type, owner_role, creator, visibility, content in section_specs:
+            section_rows.append(
+                {
+                    "id": demo_uuid(f"{story.key}:section:{section_type}"),
+                    "clinic_id": story.clinic_id,
+                    "patient_id": story.patient_id,
+                    "care_note_id": story.care_note_id,
+                    "section_type": section_type,
+                    "owner_role": owner_role,
+                    "created_by": creator,
+                    "visibility": visibility,
+                    "content": content,
+                }
+            )
+    client.upsert("note_sections", section_rows, "id")
+    client.upsert(
+        "section_versions",
+        [
+            {
+                "clinic_id": row["clinic_id"],
+                "patient_id": row["patient_id"],
+                "section_id": row["id"],
+                "version_number": 1,
+                "content_snapshot": row["content"],
+                "changed_by": row["created_by"],
+                "changed_by_role": row["owner_role"],
+                "change_reason": "Initial hosted synthetic version",
+            }
+            for row in section_rows
         ],
-        "entry_id,version_number",
+        "section_id,version_number",
     )
     client.upsert(
         "comments",
@@ -579,6 +964,35 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
         ],
         "id",
     )
+    rich_comment_rows: list[dict[str, Any]] = []
+    for story in RICH_STORIES:
+        rich_comment_rows.extend(
+            (
+                {
+                    "id": demo_uuid(f"{story.key}:comment:open"),
+                    "clinic_id": story.clinic_id,
+                    "patient_id": story.patient_id,
+                    "entry_id": demo_uuid(f"{story.key}:entry:doctor_session"),
+                    "author_id": users[story.staff_user_key],
+                    "body": "Internal synthetic comment: confirm review timing after the diary.",
+                    "status": "open",
+                    "assigned_to": users[story.clinician_user_key],
+                    "resolved_at": None,
+                },
+                {
+                    "id": demo_uuid(f"{story.key}:comment:resolved"),
+                    "clinic_id": story.clinic_id,
+                    "patient_id": story.patient_id,
+                    "entry_id": demo_uuid(f"{story.key}:entry:nurse_session"),
+                    "author_id": users[story.clinician_user_key],
+                    "body": "Internal synthetic comment: education step confirmed.",
+                    "status": "resolved",
+                    "assigned_to": None,
+                    "resolved_at": "2026-08-21T12:00:00+08:00",
+                },
+            )
+        )
+    client.upsert("comments", rich_comment_rows, "id")
     client.upsert(
         "mentions",
         [
@@ -640,6 +1054,33 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             }
         )
     client.upsert("highlights", highlight_rows, "id")
+    rich_highlights: list[dict[str, Any]] = []
+    for story in RICH_STORIES:
+        entry_id = demo_uuid(f"{story.key}:entry:doctor_session")
+        content = story.doctor_summary
+        start = content.index(story.risk_quote)
+        rich_highlights.append(
+            {
+                "id": demo_uuid(f"{story.key}:highlight:attention"),
+                "clinic_id": story.clinic_id,
+                "patient_id": story.patient_id,
+                "source_entry_id": entry_id,
+                "source_version_id": f"c{entry_id[1:]}",
+                "source_start_offset": start,
+                "source_end_offset": start + len(story.risk_quote),
+                "quoted_text": story.risk_quote,
+                "normalized_claim": story.risk_reason,
+                "risk_level": "attention",
+                "risk_reason": story.risk_reason,
+                "score": 78.0,
+                "status": "accepted",
+                "generated_by": "ai",
+                "reviewed_by": users[story.clinician_user_key],
+                "reviewed_at": "2026-08-23T10:00:00+08:00",
+                "category": "risk",
+            }
+        )
+    client.upsert("highlights", rich_highlights, "id")
     client.upsert(
         "care_tasks",
         [
@@ -675,6 +1116,156 @@ def seed_foundation(client: SupabaseAdminClient, users: dict[str, str]) -> None:
             },
         ],
         "id",
+    )
+    rich_tasks: list[dict[str, Any]] = []
+    for story in RICH_STORIES:
+        rich_tasks.extend(
+            (
+                {
+                    "id": demo_uuid(f"{story.key}:task:open"),
+                    "clinic_id": story.clinic_id,
+                    "patient_id": story.patient_id,
+                    "source_entry_id": demo_uuid(f"{story.key}:entry:clinician_note"),
+                    "title": story.task_title,
+                    "assigned_to": users[story.clinician_user_key],
+                    "created_by": users[story.staff_user_key],
+                    "status": "open",
+                    "priority": "high",
+                    "category": "monitoring",
+                    "patient_visible": True,
+                    "due_at": "2026-09-04T17:00:00+08:00",
+                    "completed_at": None,
+                },
+                {
+                    "id": demo_uuid(f"{story.key}:task:complete"),
+                    "clinic_id": story.clinic_id,
+                    "patient_id": story.patient_id,
+                    "source_entry_id": demo_uuid(f"{story.key}:entry:nurse_session"),
+                    "title": "Confirm synthetic coaching step",
+                    "assigned_to": users[story.staff_user_key],
+                    "created_by": users[story.clinician_user_key],
+                    "status": "completed",
+                    "priority": "normal",
+                    "category": "clinical_review",
+                    "patient_visible": False,
+                    "due_at": "2026-08-22T17:00:00+08:00",
+                    "completed_at": "2026-08-21T12:00:00+08:00",
+                },
+            )
+        )
+    client.upsert("care_tasks", rich_tasks, "id")
+
+    client.upsert(
+        "appointment_requests",
+        [
+            {
+                "id": demo_uuid(f"{story.key}:appointment"),
+                "clinic_id": story.clinic_id,
+                "patient_id": story.patient_id,
+                "requested_by": users[story.patient_user_key],
+                "preferred_date": (date.today() + timedelta(days=7)).isoformat(),
+                "time_preference": "afternoon" if story.key in {"riley", "quinn"} else "morning",
+                "reason_category": "follow_up",
+                "note": "Synthetic demo appointment request; no real health information.",
+                "status": "requested",
+            }
+            for story in RICH_STORIES
+        ],
+        "id",
+    )
+    report_rows: list[dict[str, Any]] = []
+    for story in RICH_STORIES:
+        report_rows.extend(
+            (
+                {
+                    "id": demo_uuid(f"{story.key}:report:available"),
+                    "clinic_id": story.clinic_id,
+                    "patient_id": story.patient_id,
+                    "title": "Synthetic care-plan summary",
+                    "report_type": "care_plan",
+                    "status": "available",
+                    "released_at": "2026-08-23T09:00:00+08:00",
+                    "released_by": users[story.clinician_user_key],
+                    "patient_safe_summary": f"Released synthetic report: {story.patient_summary}",
+                },
+                {
+                    "id": demo_uuid(f"{story.key}:report:preparing"),
+                    "clinic_id": story.clinic_id,
+                    "patient_id": story.patient_id,
+                    "title": "Synthetic follow-up report",
+                    "report_type": "other",
+                    "status": "preparing",
+                    "released_at": None,
+                    "released_by": None,
+                    "patient_safe_summary": None,
+                },
+            )
+        )
+    client.upsert("patient_reports", report_rows, "id")
+    client.upsert(
+        "patient_observations",
+        [
+            {
+                "id": demo_uuid(f"{story.key}:observation:{day}"),
+                "clinic_id": story.clinic_id,
+                "patient_id": story.patient_id,
+                "recorded_by": users[story.patient_user_key],
+                "observation_type": "symptom_score",
+                "value": value,
+                "unit": "score/10",
+                "observed_at": f"2026-08-{20 + day:02d}T08:00:00+08:00",
+            }
+            for story in RICH_STORIES
+            for day, value in ((0, 6), (1, 5), (2, 4))
+        ],
+        "id",
+    )
+    notification_rows: list[dict[str, Any]] = []
+    for story in RICH_STORIES:
+        notification_rows.extend(
+            (
+                {
+                    "id": demo_uuid(f"{story.key}:notification:staff"),
+                    "clinic_id": story.clinic_id,
+                    "patient_id": story.patient_id,
+                    "recipient_id": users[story.staff_user_key],
+                    "event_type": "care_update",
+                    "resource_type": "patient",
+                    "resource_id": story.patient_id,
+                    "status": "delivered",
+                    "delivered_at": "2026-08-23T09:05:00+08:00",
+                    "read_at": None,
+                },
+                {
+                    "id": demo_uuid(f"{story.key}:notification:clinician"),
+                    "clinic_id": story.clinic_id,
+                    "patient_id": story.patient_id,
+                    "recipient_id": users[story.clinician_user_key],
+                    "event_type": "assignment",
+                    "resource_type": "care_task",
+                    "resource_id": demo_uuid(f"{story.key}:task:open"),
+                    "status": "delivered",
+                    "delivered_at": "2026-08-23T09:06:00+08:00",
+                    "read_at": None,
+                },
+                {
+                    "id": demo_uuid(f"{story.key}:notification:patient"),
+                    "clinic_id": story.clinic_id,
+                    "patient_id": story.patient_id,
+                    "recipient_id": users[story.patient_user_key],
+                    "event_type": "care_update",
+                    "resource_type": "patient_summary",
+                    "resource_id": demo_uuid(f"{story.key}:entry:patient_summary"),
+                    "status": "delivered",
+                    "delivered_at": "2026-08-23T09:07:00+08:00",
+                    "read_at": None,
+                },
+            )
+        )
+    client.upsert(
+        "notification_outbox",
+        notification_rows,
+        "recipient_id,event_type,resource_id",
     )
 
 

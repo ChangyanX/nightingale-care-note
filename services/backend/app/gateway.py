@@ -99,6 +99,47 @@ class SupabaseGateway:
             )
         return self._decode_list(response)
 
+    async def upload_storage_object(
+        self,
+        bucket: str,
+        object_path: str,
+        access_token: str,
+        content: bytes,
+        content_type: str,
+    ) -> None:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(
+                f"{self.base_url}/storage/v1/object/{bucket}/{object_path}",
+                headers={
+                    **self._headers(access_token),
+                    "content-type": content_type,
+                    "x-upsert": "true",
+                },
+                content=content,
+            )
+        if response.is_error:
+            raise self._error(response)
+
+    async def sign_storage_object(
+        self,
+        bucket: str,
+        object_path: str,
+        access_token: str,
+        *,
+        expires_in: int = 3600,
+    ) -> str:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            response = await client.post(
+                f"{self.base_url}/storage/v1/object/sign/{bucket}/{object_path}",
+                headers=self._headers(access_token),
+                json={"expiresIn": expires_in},
+            )
+        body = self._decode_object(response)
+        signed_path = body.get("signedURL") or body.get("signedUrl")
+        if not isinstance(signed_path, str):
+            raise SupabaseGatewayError(status_code=502, code="unexpected_signed_url")
+        return signed_path if signed_path.startswith("http") else f"{self.base_url}{signed_path}"
+
     @staticmethod
     def _error(response: httpx.Response) -> SupabaseGatewayError:
         code: str | None = None

@@ -276,6 +276,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload Avatar */
+        post: operations["upload_avatar_me_avatar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Account Profile */
+        get: operations["get_account_profile_me_profile_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Account Profile */
+        patch: operations["update_account_profile_me_profile_patch"];
+        trace?: never;
+    };
     "/notifications": {
         parameters: {
             query?: never;
@@ -310,6 +345,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/notifications/{notification_id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark Notification Read */
+        post: operations["mark_notification_read_notifications__notification_id__read_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/patient-summary-reviews/{review_id}/review": {
         parameters: {
             query?: never;
@@ -321,6 +373,74 @@ export interface paths {
         put?: never;
         /** Review Patient Summary */
         post: operations["review_patient_summary_patient_summary_reviews__review_id__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/patient/ai-question": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record Ai Question */
+        post: operations["record_ai_question_patient_ai_question_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/patient/appointments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Appointment */
+        post: operations["create_appointment_patient_appointments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/patient/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Patient Dashboard */
+        get: operations["patient_dashboard_patient_dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/patient/symptoms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Log Symptoms */
+        post: operations["log_symptoms_patient_symptoms_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -690,6 +810,84 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccountProfileResponse */
+        AccountProfileResponse: {
+            /** Avatar Path */
+            avatar_path: string | null;
+            /** Avatar Url */
+            avatar_url?: string | null;
+            /** Birth Date */
+            birth_date: string | null;
+            /** Display Name */
+            display_name: string;
+            /** Email */
+            email: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Linked Patient Id */
+            linked_patient_id?: string | null;
+            /** Memberships */
+            memberships: components["schemas"]["MembershipResponse"][];
+            /** Preferred Name */
+            preferred_name: string;
+        };
+        /** AppointmentRequestResponse */
+        AppointmentRequestResponse: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Note */
+            note: string | null;
+            /**
+             * Preferred Date
+             * Format: date
+             */
+            preferred_date: string;
+            /**
+             * Reason Category
+             * @enum {string}
+             */
+            reason_category: "follow_up" | "new_symptom" | "medication" | "other";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "requested" | "confirmed" | "declined" | "cancelled";
+            /**
+             * Time Preference
+             * @enum {string}
+             */
+            time_preference: "morning" | "afternoon" | "either";
+        };
+        /** AvatarUploadRequest */
+        AvatarUploadRequest: {
+            /**
+             * Content Type
+             * @enum {string}
+             */
+            content_type: "image/png" | "image/jpeg" | "image/webp";
+            /** Data Base64 */
+            data_base64: string;
+            /** Filename */
+            filename: string;
+        };
+        /** AvatarUploadResponse */
+        AvatarUploadResponse: {
+            /** Avatar Path */
+            avatar_path: string;
+            /** Avatar Url */
+            avatar_url: string;
+        };
         /** BatchRevertOperation */
         BatchRevertOperation: {
             /** Change Reason */
@@ -851,6 +1049,27 @@ export interface components {
              * @enum {string}
              */
             status: "open" | "resolved";
+        };
+        /** CreateAppointmentRequest */
+        CreateAppointmentRequest: {
+            /** Note */
+            note?: string | null;
+            /**
+             * Preferred Date
+             * Format: date
+             */
+            preferred_date: string;
+            /**
+             * Reason Category
+             * @enum {string}
+             */
+            reason_category: "follow_up" | "new_symptom" | "medication" | "other";
+            /**
+             * Time Preference
+             * @default either
+             * @enum {string}
+             */
+            time_preference: "morning" | "afternoon" | "either";
         };
         /** CreateCommentRequest */
         CreateCommentRequest: {
@@ -1096,6 +1315,11 @@ export interface components {
         };
         /** MeResponse */
         MeResponse: {
+            /**
+             * Account Kind
+             * @enum {string}
+             */
+            account_kind: "clinic_user" | "patient";
             /** Display Name */
             display_name: string;
             /** Email */
@@ -1105,8 +1329,17 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /**
+             * Landing Path
+             * @enum {string}
+             */
+            landing_path: "/patients" | "/patient";
+            /** Linked Patient Id */
+            linked_patient_id?: string | null;
             /** Memberships */
             memberships: components["schemas"]["MembershipResponse"][];
+            /** Preferred Name */
+            preferred_name: string;
         };
         /** MembershipResponse */
         MembershipResponse: {
@@ -1209,7 +1442,7 @@ export interface components {
              * Event Type
              * @enum {string}
              */
-            event_type: "mention" | "assignment" | "ai_job_completed";
+            event_type: "mention" | "assignment" | "ai_job_completed" | "care_update" | "appointment_update" | "report_released";
             /**
              * Id
              * Format: uuid
@@ -1217,6 +1450,8 @@ export interface components {
             id: string;
             /** Patient Id */
             patient_id: string | null;
+            /** Read At */
+            read_at?: string | null;
             /**
              * Recipient Id
              * Format: uuid
@@ -1235,6 +1470,89 @@ export interface components {
              */
             status: "pending" | "delivered" | "failed" | "dismissed";
         };
+        /** PatientAiQuestionRequest */
+        PatientAiQuestionRequest: {
+            /** Question */
+            question: string;
+        };
+        /** PatientDashboardResponse */
+        PatientDashboardResponse: {
+            /** Appointments */
+            appointments: components["schemas"]["AppointmentRequestResponse"][];
+            /**
+             * Clinic Id
+             * Format: uuid
+             */
+            clinic_id: string;
+            /** Display Name */
+            display_name: string;
+            /** History */
+            history: components["schemas"]["PatientSafeEntryResponse"][];
+            /** Instructions */
+            instructions: components["schemas"]["PatientSafeEntryResponse"][];
+            /** Observations */
+            observations: components["schemas"]["PatientObservationResponse"][];
+            /**
+             * Patient Id
+             * Format: uuid
+             */
+            patient_id: string;
+            /** Reports */
+            reports: components["schemas"]["PatientReportResponse"][];
+            /** Summaries */
+            summaries: components["schemas"]["PatientSafeEntryResponse"][];
+            /** Synthetic Identifier */
+            synthetic_identifier: string;
+            /** Visible Tasks */
+            visible_tasks: components["schemas"]["PatientVisibleTaskResponse"][];
+        };
+        /** PatientObservationResponse */
+        PatientObservationResponse: {
+            /**
+             * Observation Type
+             * @enum {string}
+             */
+            observation_type: "peak_flow" | "sleep_hours" | "symptom_score";
+            /**
+             * Observed At
+             * Format: date-time
+             */
+            observed_at: string;
+            /** Unit */
+            unit: string;
+            /** Value */
+            value: number;
+        };
+        /** PatientPortalEntryResponse */
+        PatientPortalEntryResponse: {
+            entry: components["schemas"]["PatientSafeEntryResponse"];
+            /** Message */
+            message: string;
+        };
+        /** PatientReportResponse */
+        PatientReportResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Patient Safe Summary */
+            patient_safe_summary: string | null;
+            /** Released At */
+            released_at: string | null;
+            /**
+             * Report Type
+             * @enum {string}
+             */
+            report_type: "lab" | "imaging" | "care_plan" | "other";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "preparing" | "available" | "withdrawn";
+            /** Title */
+            title: string;
+        };
         /** PatientResponse */
         PatientResponse: {
             /**
@@ -1251,6 +1569,26 @@ export interface components {
             id: string;
             /** Synthetic Identifier */
             synthetic_identifier: string;
+        };
+        /** PatientSafeEntryResponse */
+        PatientSafeEntryResponse: {
+            /** Content */
+            content: string;
+            /**
+             * Entry Type
+             * @enum {string}
+             */
+            entry_type: "patient_summary" | "patient_instruction" | "patient_insight";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
         };
         /** PatientSummaryReviewRequest */
         PatientSummaryReviewRequest: {
@@ -1300,6 +1638,25 @@ export interface components {
             status: "suggested" | "accepted" | "rejected";
             /** Summary Entry Id */
             summary_entry_id: string | null;
+        };
+        /** PatientVisibleTaskResponse */
+        PatientVisibleTaskResponse: {
+            /** Due At */
+            due_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Patient Acknowledged At */
+            patient_acknowledged_at: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "in_progress" | "completed" | "cancelled";
+            /** Title */
+            title: string;
         };
         /** ProviderUsageResponse */
         ProviderUsageResponse: {
@@ -1508,6 +1865,20 @@ export interface components {
             /** Source Type */
             source_type: string;
         };
+        /** SymptomLogRequest */
+        SymptomLogRequest: {
+            /** Notes */
+            notes?: string | null;
+            /** Severity */
+            severity: number;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Symptom */
+            symptom: string;
+        };
         /** TimelineEntryResponse */
         TimelineEntryResponse: {
             /** Author Id */
@@ -1554,6 +1925,13 @@ export interface components {
              * @enum {string}
              */
             visibility: "internal" | "patient_facing";
+        };
+        /** UpdateAccountProfileRequest */
+        UpdateAccountProfileRequest: {
+            /** Birth Date */
+            birth_date?: string | null;
+            /** Preferred Name */
+            preferred_name?: string | null;
         };
         /** UpdateCareTaskRequest */
         UpdateCareTaskRequest: {
@@ -2101,6 +2479,92 @@ export interface operations {
             };
         };
     };
+    upload_avatar_me_avatar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvatarUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvatarUploadResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_account_profile_me_profile_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountProfileResponse"];
+                };
+            };
+        };
+    };
+    update_account_profile_me_profile_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAccountProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_notifications_notifications_get: {
         parameters: {
             query?: never;
@@ -2122,6 +2586,37 @@ export interface operations {
         };
     };
     dismiss_notification_notifications__notification_id__dismiss_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notification_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_notification_read_notifications__notification_id__read_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2174,6 +2669,125 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PatientSummaryReviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_ai_question_patient_ai_question_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatientAiQuestionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientPortalEntryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_appointment_patient_appointments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAppointmentRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentRequestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patient_dashboard_patient_dashboard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientDashboardResponse"];
+                };
+            };
+        };
+    };
+    log_symptoms_patient_symptoms_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SymptomLogRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientPortalEntryResponse"];
                 };
             };
             /** @description Validation Error */

@@ -41,9 +41,9 @@ service-role key.
    make seed-hosted PROJECT_REF=<project-ref>
    ```
 
-   The command creates or updates only the six named synthetic demo identities,
-   inserts their matching profiles, memberships, and two-clinic demonstration
-   records, and writes their generated passwords to `.env.hosted-demo` with
+   The command creates or updates only the ten named synthetic demo identities,
+   inserts their matching profiles, memberships, five-patient two-clinic
+   longitudinal records and portal fixtures, and writes their generated passwords to `.env.hosted-demo` with
    owner-only (`0600`) permissions. The explicit project-reference argument
    prevents accidentally seeding a different project.
 5. Back up `.env.hosted-demo` in your password manager if another session or

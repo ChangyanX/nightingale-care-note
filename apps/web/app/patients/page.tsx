@@ -28,10 +28,9 @@ export default function PatientsPage() {
       const token = data.session?.access_token;
       if (!token) { router.replace("/sign-in"); return; }
       try {
-        const [nextUser, nextPatients] = await Promise.all([
-          apiGet<CurrentUser>("/me", token),
-          apiGet<Patient[]>("/patients", token),
-        ]);
+        const nextUser = await apiGet<CurrentUser>("/me", token);
+        if (nextUser.account_kind === "patient") { router.replace("/patient"); return; }
+        const nextPatients = await apiGet<Patient[]>("/patients", token);
         if (!active) return;
         if (!nextUser.memberships.length) { setError("This account has no active clinic membership."); return; }
         setUser(nextUser);

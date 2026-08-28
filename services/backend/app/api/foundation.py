@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import hashlib
 import json
@@ -51,6 +52,27 @@ async def _get_patient_row(
     if not rows:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
     return rows[0]
+
+
+async def _require_clinic_user(
+    auth: AuthDependency,
+    client: SupabaseGateway,
+) -> None:
+    memberships = await client.select(
+        "clinic_memberships",
+        auth.access_token,
+        {
+            "select": "clinic_id,role",
+            "profile_id": f"eq.{auth.user_id}",
+            "role": "in.(staff,clinician,admin)",
+            "limit": "1",
+        },
+    )
+    if not memberships:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Clinical workspace access is limited to clinic staff",
+        )
 
 
 async def _get_timeline_rows(
@@ -158,7 +180,11 @@ async def me(auth: AuthDependency, settings: SettingsDependency) -> MeResponse:
     profiles = await client.select(
         "profiles",
         auth.access_token,
-        {"select": "id,display_name", "id": f"eq.{auth.user_id}", "limit": "1"},
+        {
+            "select": "id,display_name,preferred_name",
+            "id": f"eq.{auth.user_id}",
+            "limit": "1",
+        },
     )
     if not profiles:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
@@ -167,11 +193,29 @@ async def me(auth: AuthDependency, settings: SettingsDependency) -> MeResponse:
         auth.access_token,
         {"select": "clinic_id,role", "profile_id": f"eq.{auth.user_id}"},
     )
+    linked_patients = await client.select(
+        "patients",
+        auth.access_token,
+        {
+            "select": "id",
+            "linked_profile_id": f"eq.{auth.user_id}",
+            "limit": "1",
+        },
+    )
+    if not memberships and not linked_patients:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Account has no care access"
+        )
+    account_kind = "clinic_user" if memberships else "patient"
     return MeResponse(
         id=auth.user_id,
         email=auth.email,
         display_name=str(profiles[0]["display_name"]),
+        preferred_name=str(profiles[0].get("preferred_name") or profiles[0]["display_name"]),
         memberships=[MembershipResponse.model_validate(item) for item in memberships],
+        linked_patient_id=linked_patients[0]["id"] if linked_patients else None,
+        account_kind=account_kind,
+        landing_path="/patients" if account_kind == "clinic_user" else "/patient",
     )
 
 
@@ -181,6 +225,8 @@ async def list_patients(
     settings: SettingsDependency,
     query: str | None = Query(default=None, min_length=1, max_length=100, alias="q"),
 ) -> list[PatientResponse]:
+    client = gateway(settings)
+    await _require_clinic_user(auth, client)
     params = {
         "select": "id,clinic_id,synthetic_identifier,display_name",
         "order": "display_name.asc",
@@ -188,7 +234,7 @@ async def list_patients(
     }
     if query:
         params["search_document"] = f"fts.{query}"
-    rows = await gateway(settings).select(
+    rows = await client.select(
         "patients",
         auth.access_token,
         params,
@@ -202,7 +248,9 @@ async def get_patient(
     auth: AuthDependency,
     settings: SettingsDependency,
 ) -> PatientResponse:
-    row = await _get_patient_row(patient_id, auth.access_token, gateway(settings))
+    client = gateway(settings)
+    await _require_clinic_user(auth, client)
+    row = await _get_patient_row(patient_id, auth.access_token, client)
     return PatientResponse.model_validate(row)
 
 
@@ -224,6 +272,7 @@ async def get_timeline(
     date_to: datetime | None = None,
 ) -> list[TimelineEntryResponse]:
     client = gateway(settings)
+    await _require_clinic_user(auth, client)
     await _get_patient_row(patient_id, auth.access_token, client)
     rows = await _get_timeline_rows(
         patient_id,
@@ -253,6 +302,7 @@ async def get_tasks(
     settings: SettingsDependency,
 ) -> list[CareTaskResponse]:
     client = gateway(settings)
+    await _require_clinic_user(auth, client)
     await _get_patient_row(patient_id, auth.access_token, client)
     rows = await _get_task_rows(patient_id, auth.access_token, client)
     return [CareTaskResponse.model_validate(row) for row in rows]
@@ -270,9 +320,12 @@ async def get_glance(
     response: Response,
 ) -> GlanceResponse:
     client = gateway(settings)
+    await _require_clinic_user(auth, client)
     await _get_patient_row(patient_id, auth.access_token, client)
-    timeline_rows = await _get_timeline_rows(patient_id, auth.access_token, client)
-    open_tasks = await _get_task_rows(patient_id, auth.access_token, client, open_only=True)
+    timeline_rows, open_tasks = await asyncio.gather(
+        _get_timeline_rows(patient_id, auth.access_token, client),
+        _get_task_rows(patient_id, auth.access_token, client, open_only=True),
+    )
     entries_by_type: dict[str, dict[str, Any]] = {}
     entries_by_id: dict[str, dict[str, Any]] = {}
     for row in timeline_rows:

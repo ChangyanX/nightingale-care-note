@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class HealthResponse(BaseModel):
@@ -32,7 +32,41 @@ class MeResponse(BaseModel):
     id: UUID
     email: str | None
     display_name: str
+    preferred_name: str
     memberships: list[MembershipResponse]
+    linked_patient_id: UUID | None = None
+    account_kind: Literal["clinic_user", "patient"]
+    landing_path: Literal["/patients", "/patient"]
+
+
+class AccountProfileResponse(BaseModel):
+    id: UUID
+    email: str | None
+    display_name: str
+    preferred_name: str
+    birth_date: date | None
+    avatar_path: str | None
+    avatar_url: str | None = None
+    memberships: list[MembershipResponse]
+    linked_patient_id: UUID | None = None
+
+
+class UpdateAccountProfileRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    preferred_name: str | None = Field(default=None, min_length=1, max_length=80)
+    birth_date: date | None = None
+
+
+class AvatarUploadRequest(BaseModel):
+    filename: str = Field(min_length=1, max_length=120)
+    content_type: Literal["image/png", "image/jpeg", "image/webp"]
+    data_base64: str = Field(min_length=4, max_length=1_500_000)
+
+
+class AvatarUploadResponse(BaseModel):
+    avatar_path: str
+    avatar_url: str
 
 
 class PatientResponse(BaseModel):
@@ -265,11 +299,97 @@ class NotificationResponse(BaseModel):
     clinic_id: UUID
     patient_id: UUID | None
     recipient_id: UUID
-    event_type: Literal["mention", "assignment", "ai_job_completed"]
+    event_type: Literal[
+        "mention",
+        "assignment",
+        "ai_job_completed",
+        "care_update",
+        "appointment_update",
+        "report_released",
+    ]
     resource_type: str
     resource_id: UUID
     status: Literal["pending", "delivered", "failed", "dismissed"]
+    read_at: datetime | None = None
     created_at: datetime
+
+
+class PatientSafeEntryResponse(BaseModel):
+    id: UUID
+    entry_type: Literal["patient_summary", "patient_instruction", "patient_insight"]
+    content: str
+    occurred_at: datetime
+
+
+class AppointmentRequestResponse(BaseModel):
+    id: UUID
+    preferred_date: date
+    time_preference: Literal["morning", "afternoon", "either"]
+    reason_category: Literal["follow_up", "new_symptom", "medication", "other"]
+    note: str | None
+    status: Literal["requested", "confirmed", "declined", "cancelled"]
+    created_at: datetime
+
+
+class CreateAppointmentRequest(BaseModel):
+    preferred_date: date
+    time_preference: Literal["morning", "afternoon", "either"] = "either"
+    reason_category: Literal["follow_up", "new_symptom", "medication", "other"]
+    note: str | None = Field(default=None, max_length=500)
+
+
+class PatientReportResponse(BaseModel):
+    id: UUID
+    title: str
+    report_type: Literal["lab", "imaging", "care_plan", "other"]
+    status: Literal["preparing", "available", "withdrawn"]
+    released_at: datetime | None
+    patient_safe_summary: str | None
+
+
+class PatientObservationResponse(BaseModel):
+    observation_type: Literal["peak_flow", "sleep_hours", "symptom_score"]
+    value: float
+    unit: str
+    observed_at: datetime
+
+
+class PatientVisibleTaskResponse(BaseModel):
+    id: UUID
+    title: str
+    status: CareTaskStatus
+    due_at: datetime | None
+    patient_acknowledged_at: datetime | None
+
+
+class PatientDashboardResponse(BaseModel):
+    patient_id: UUID
+    display_name: str
+    synthetic_identifier: str
+    clinic_id: UUID
+    summaries: list[PatientSafeEntryResponse]
+    instructions: list[PatientSafeEntryResponse]
+    history: list[PatientSafeEntryResponse]
+    appointments: list[AppointmentRequestResponse]
+    reports: list[PatientReportResponse]
+    observations: list[PatientObservationResponse]
+    visible_tasks: list[PatientVisibleTaskResponse]
+
+
+class SymptomLogRequest(BaseModel):
+    symptom: str = Field(min_length=1, max_length=120)
+    severity: int = Field(ge=0, le=10)
+    started_at: datetime
+    notes: str | None = Field(default=None, max_length=1000)
+
+
+class PatientAiQuestionRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=2000)
+
+
+class PatientPortalEntryResponse(BaseModel):
+    entry: PatientSafeEntryResponse
+    message: str
 
 
 class PatientSummaryReviewResponse(BaseModel):

@@ -20,6 +20,9 @@ The full-quality core estimate for Phases 1-5 is 35-45 focused hours; Phase 6 ad
 The adaptive importance mechanism in Phase 4 is not reinforcement learning. It uses bounded, explainable weight updates from explicit accept, reject, pin, edit, and comment events. Ambient voice capture and CRDT-style simultaneous text editing remain out of scope.
 
 For architecture, data-model, and security details, see [the project blueprint](blueprint.md).
+Role routing, Account Settings, notification/session behavior, the patient-safe
+DTO/RLS boundary, and the intentionally lightweight portal scope are in
+[Role Portals, Account Security, and Patient Privacy](role-portals-and-privacy.md).
 
 Hosted Supabase setup and the credential boundary are defined in
 [Supabase Setup](supabase-setup.md) and

@@ -57,6 +57,10 @@ def test_ensure_users_creates_missing_and_rotates_existing_passwords() -> None:
         ("PATIENT_A", "patient.a@nightingale-demo.invalid"),
         ("STAFF_B", "staff.b@nightingale-demo.invalid"),
         ("CLINICIAN_B", "clinician.b@nightingale-demo.invalid"),
+        ("PATIENT_A2", "patient.a2@nightingale-demo.invalid"),
+        ("PATIENT_B", "patient.b@nightingale-demo.invalid"),
+        ("PATIENT_A3", "patient.a3@nightingale-demo.invalid"),
+        ("PATIENT_B2", "patient.b2@nightingale-demo.invalid"),
     ):
         credentials[f"NIGHTINGALE_DEMO_{key}_EMAIL"] = email
         credentials[f"NIGHTINGALE_DEMO_{key}_PASSWORD"] = "generated-password"
@@ -69,7 +73,7 @@ def test_ensure_users_creates_missing_and_rotates_existing_passwords() -> None:
         user_ids = client.ensure_users(credentials)
 
     assert user_ids["ADMIN_A"] == "existing-admin-id"
-    assert len([request for request in requests if request.method == "POST"]) == 5
+    assert len([request for request in requests if request.method == "POST"]) == 9
     assert len([request for request in requests if request.method == "PUT"]) == 1
 
 
@@ -81,10 +85,10 @@ def test_hosted_foundation_seed_preserves_story_dates_and_tasks() -> None:
             self,
             table: str,
             rows: list[dict[str, object]],
-            conflict: str,
-        ) -> None:
-            assert conflict
-            calls[table] = rows
+                conflict: str,
+            ) -> None:
+                assert conflict
+                calls.setdefault(table, []).extend(rows)
 
     user_ids = {
         "ADMIN_A": "20000000-0000-0000-0000-000000000001",
@@ -93,6 +97,10 @@ def test_hosted_foundation_seed_preserves_story_dates_and_tasks() -> None:
         "PATIENT_A": "20000000-0000-0000-0000-000000000004",
         "STAFF_B": "20000000-0000-0000-0000-000000000005",
         "CLINICIAN_B": "20000000-0000-0000-0000-000000000006",
+        "PATIENT_A2": "20000000-0000-0000-0000-000000000007",
+        "PATIENT_B": "20000000-0000-0000-0000-000000000008",
+        "PATIENT_A3": "20000000-0000-0000-0000-000000000009",
+        "PATIENT_B2": "20000000-0000-0000-0000-000000000010",
     }
 
     seed_foundation(RecordingClient(), user_ids)  # type: ignore[arg-type]
@@ -108,6 +116,38 @@ def test_hosted_foundation_seed_preserves_story_dates_and_tasks() -> None:
     assert {row["status"] for row in calls["comments"]} == {"open", "resolved"}
     assert {row["status"] for row in calls["highlights"]} == {"accepted", "rejected"}
     assert any(row["generated_by"] == "ai" for row in calls["highlights"])
+    assert len(calls["patients"]) == 5
+    assert all(row["linked_profile_id"] for row in calls["patients"])
+    assert all("SYN-" in str(row["synthetic_identifier"]) for row in calls["patients"])
+    required_types = {
+        "patient_insight",
+        "staff_note",
+        "clinician_note",
+        "patient_summary",
+        "patient_instruction",
+        "ai_doctor_consult_summary",
+        "ai_nurse_consult_summary",
+        "ai_patient_session_summary",
+    }
+    for patient in calls["patients"]:
+        patient_types = {
+            row["entry_type"]
+            for row in calls["entries"]
+            if row["patient_id"] == patient["id"]
+        }
+        assert required_types <= patient_types
+    revised_entries = {
+        row["entry_id"]
+        for row in calls["entry_versions"]
+        if row["version_number"] == 2
+    }
+    assert len(revised_entries) == 5
+    assert len(calls["note_sections"]) == 20
+    assert {row["status"] for row in calls["patient_reports"]} == {
+        "available",
+        "preparing",
+    }
+    assert all("content" not in row for row in calls["notification_outbox"])
     for row in calls["highlights"]:
         entry = next(entry for entry in calls["entries"] if entry["id"] == row["source_entry_id"])
         content = str(entry["content"])

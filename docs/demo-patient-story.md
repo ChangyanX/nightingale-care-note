@@ -27,6 +27,26 @@ The intended reviewer answers are:
 3. What needs action? Complete and review the peak-flow diary, with earlier
    contact if breathing worsens.
 
+## Synthetic demo cohort
+
+The seed now contains five linked synthetic patient accounts across two clinics.
+Every patient has a coherent multi-date patient update, staff note, clinician
+note and revision, patient instruction/summary, open and completed actions,
+comments, accepted risk highlight, and separate doctor-, nurse-, and
+AI-patient-session source records and entries.
+
+| Patient | Clinic | Synthetic ID | Story focus |
+|---|---|---|---|
+| Parker Patient | Harbour Family Clinic | `SYN-A-001` | Nocturnal cough and peak-flow diary |
+| Morgan Example (Synthetic) | Harbour Family Clinic | `SYN-A-002` | Home-reading diary and technique review |
+| Jamie Sample (Synthetic) | Harbour Family Clinic | `SYN-A-003` | Sleep/energy log |
+| Riley Example (Synthetic) | Orchard Community Clinic | `SYN-B-001` | Knee symptom/activity diary |
+| Quinn Sample (Synthetic) | Orchard Community Clinic | `SYN-B-002` | Seasonal symptom/trigger diary |
+
+Each linked patient also has an appointment request, released and preparing
+report fixtures, patient-safe observations, and content-safe notifications.
+The second clinic exists both for a convincing list and tenant-isolation tests.
+
 ## Source map
 
 | Story element | Source entry | Source record | Perspective | Patient-safe? |
@@ -38,6 +58,7 @@ The intended reviewer answers are:
 | Earlier-review question | `700…005` | `600…005` | AI-generated patient session | No raw AI note |
 | Peak-flow instructions | `700…006` | `600…006` | Clinician patient instruction | Yes |
 | Sleep/cold-room observation | `700…007` | `600…007` | Patient-provided insight | Own entry only |
+| Released care summary | `700…010` | `600…010` | Clinician-approved patient summary | Yes |
 
 The complete UUIDs remain in `supabase/seed.sql`. The shortened identifiers
 above are for readable documentation only.
@@ -95,15 +116,16 @@ patient's own submitted insights.
 
 ### Care task
 
-Contains task ID, patient ID, title, status, priority, optional assignee and due
-time, optional source entry, and timestamps. Phase 2 tasks are internal and are
-not returned to patients.
+The clinical API contains task ID, patient ID, title, status, priority, optional
+assignee/due time, optional source entry, and timestamps. The patient dashboard
+uses a reduced schema and returns only tasks explicitly marked
+`patient_visible`; it omits assignee, creator, category, source, and audit data.
 
 ## Role controls
 
 | Control | Staff | Clinician | Admin | Patient |
 |---|---:|---:|---:|---:|
-| View clinic Glance/timeline/tasks | Yes | Yes | Yes | No |
+| View clinic Glance/timeline/tasks | Yes | Yes | Yes | No; dedicated own-account dashboard |
 | Add staff note | Yes | No | No | No |
 | Add clinician note/instruction | No | Yes | No | No |
 | Update internal care task | Yes | Yes | No | No |
@@ -115,6 +137,7 @@ enforce the same boundary when an endpoint is called directly.
 
 ## Seed consistency requirement
 
-The local `supabase/seed.sql` and hosted `scripts.seed_hosted` helper must
-produce the same story, source dates, and task states even though hosted Auth
-user UUIDs and passwords are generated dynamically.
+The local `supabase/seed.sql` and hosted `scripts.seed_hosted` helper produce the
+same five-patient story shape, source dates, revisions, collaboration states,
+portal artifacts, and task states even though hosted Auth UUIDs and passwords
+are generated dynamically.

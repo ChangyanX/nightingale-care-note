@@ -1,8 +1,12 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { PasswordField } from "@/components/password-field";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { apiGet } from "@/lib/api/client";
+import type { CurrentUser } from "@/lib/api/types";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export default function SignInPage() {
@@ -19,17 +23,33 @@ export default function SignInPage() {
     ["Patient", "patient.a@nightingale.local"],
   ] as const;
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("password") === "changed") {
+      queueMicrotask(() => setMessage("Password changed. Sign in again with your new password."));
+    }
+  }, []);
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
     setError(null);
-    const { error: authError } = await createSupabaseBrowserClient().auth.signInWithPassword({ email, password });
+    const supabase = createSupabaseBrowserClient();
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
     if (authError) {
       setError("Sign-in failed. Check the selected demo account and password.");
       setSubmitting(false);
       return;
     }
-    router.replace("/patients");
+    const token = data.session?.access_token;
+    if (!token) { setError("Sign-in completed without an application session."); setSubmitting(false); return; }
+    try {
+      const identity = await apiGet<CurrentUser>("/me", token);
+      router.replace(identity.landing_path);
+    } catch {
+      await supabase.auth.signOut({ scope: "local" });
+      setError("This account has no authorized Nightingale workspace.");
+      setSubmitting(false);
+    }
     router.refresh();
   }
 
@@ -40,7 +60,7 @@ export default function SignInPage() {
     setMessage(null);
     const { error: authError } = await createSupabaseBrowserClient().auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${window.location.origin}/patients` },
+      options: { emailRedirectTo: `${window.location.origin}/post-login` },
     });
     if (authError) setError("Passwordless sign-in is unavailable for this environment.");
     else setMessage("If passwordless delivery is configured, a sign-in link has been requested.");
@@ -48,7 +68,7 @@ export default function SignInPage() {
   }
 
   return (
-    <main className="auth-shell">
+    <main className="auth-shell"><div className="auth-theme"><ThemeToggle /></div>
       <section className="auth-card" aria-labelledby="sign-in-title">
         <p className="eyebrow">Synthetic demonstration environment</p>
         <h1 id="sign-in-title">Open the shared patient story.</h1>
@@ -64,7 +84,7 @@ export default function SignInPage() {
         ) : null}
         <form onSubmit={submit} className="auth-form">
           <label>Email<input type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
-          <label>Password<input type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+          <PasswordField label="Password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} />
           {error ? <p className="form-error" role="alert">{error}</p> : null}
           <button className="primary-button" type="submit" disabled={submitting}>{submitting ? "Signing in…" : "Sign in"}</button>
           <button className="secondary-button" type="button" disabled={submitting} onClick={sendMagicLink}>Request passwordless link</button>

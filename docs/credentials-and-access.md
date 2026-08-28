@@ -181,6 +181,24 @@ file's values into your password manager if they must survive the workstation;
 do not paste them into chat. The setup records only the generated Auth UUID
 relationships in application tables.
 
+The canonical local demo identities all use `NightingaleDemo2026!`:
+
+| Identity | Email | Context |
+|---|---|---|
+| Avery Admin | `admin.a@nightingale.local` | Harbour, read-only clinical oversight |
+| Sam Staff | `staff.a@nightingale.local` | Harbour |
+| Dr. Casey Clinician | `clinician.a@nightingale.local` | Harbour |
+| Parker Patient | `patient.a@nightingale.local` | Harbour, `SYN-A-001` |
+| Morgan Example (Synthetic) | `patient.a2@nightingale.local` | Harbour, `SYN-A-002` |
+| Jamie Sample (Synthetic) | `patient.a3@nightingale.local` | Harbour, `SYN-A-003` |
+| Taylor Staff | `staff.b@nightingale.local` | Orchard |
+| Dr. Jordan Clinician | `clinician.b@nightingale.local` | Orchard |
+| Riley Example (Synthetic) | `patient.b@nightingale.local` | Orchard, `SYN-B-001` |
+| Quinn Sample (Synthetic) | `patient.b2@nightingale.local` | Orchard, `SYN-B-002` |
+
+Hosted emails use the `.invalid` domain and unique generated passwords from
+`.env.hosted-demo`; the known local password is never used by hosted seeding.
+
 ## Rotation and incident response
 
 - If a publishable key is rotated, update both frontend and API environments

@@ -1,6 +1,218 @@
 {
   "components": {
     "schemas": {
+      "AccountProfileResponse": {
+        "properties": {
+          "avatar_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Path"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
+          "birth_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birth Date"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "linked_patient_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked Patient Id"
+          },
+          "memberships": {
+            "items": {
+              "$ref": "#/components/schemas/MembershipResponse"
+            },
+            "title": "Memberships",
+            "type": "array"
+          },
+          "preferred_name": {
+            "title": "Preferred Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "display_name",
+          "preferred_name",
+          "birth_date",
+          "avatar_path",
+          "memberships"
+        ],
+        "title": "AccountProfileResponse",
+        "type": "object"
+      },
+      "AppointmentRequestResponse": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "preferred_date": {
+            "format": "date",
+            "title": "Preferred Date",
+            "type": "string"
+          },
+          "reason_category": {
+            "enum": [
+              "follow_up",
+              "new_symptom",
+              "medication",
+              "other"
+            ],
+            "title": "Reason Category",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "requested",
+              "confirmed",
+              "declined",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "time_preference": {
+            "enum": [
+              "morning",
+              "afternoon",
+              "either"
+            ],
+            "title": "Time Preference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "preferred_date",
+          "time_preference",
+          "reason_category",
+          "note",
+          "status",
+          "created_at"
+        ],
+        "title": "AppointmentRequestResponse",
+        "type": "object"
+      },
+      "AvatarUploadRequest": {
+        "properties": {
+          "content_type": {
+            "enum": [
+              "image/png",
+              "image/jpeg",
+              "image/webp"
+            ],
+            "title": "Content Type",
+            "type": "string"
+          },
+          "data_base64": {
+            "maxLength": 1500000,
+            "minLength": 4,
+            "title": "Data Base64",
+            "type": "string"
+          },
+          "filename": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Filename",
+            "type": "string"
+          }
+        },
+        "required": [
+          "filename",
+          "content_type",
+          "data_base64"
+        ],
+        "title": "AvatarUploadRequest",
+        "type": "object"
+      },
+      "AvatarUploadResponse": {
+        "properties": {
+          "avatar_path": {
+            "title": "Avatar Path",
+            "type": "string"
+          },
+          "avatar_url": {
+            "title": "Avatar Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "avatar_path",
+          "avatar_url"
+        ],
+        "title": "AvatarUploadResponse",
+        "type": "object"
+      },
       "BatchRevertOperation": {
         "properties": {
           "change_reason": {
@@ -424,6 +636,53 @@
           "resolved_at"
         ],
         "title": "CommentResponse",
+        "type": "object"
+      },
+      "CreateAppointmentRequest": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "preferred_date": {
+            "format": "date",
+            "title": "Preferred Date",
+            "type": "string"
+          },
+          "reason_category": {
+            "enum": [
+              "follow_up",
+              "new_symptom",
+              "medication",
+              "other"
+            ],
+            "title": "Reason Category",
+            "type": "string"
+          },
+          "time_preference": {
+            "default": "either",
+            "enum": [
+              "morning",
+              "afternoon",
+              "either"
+            ],
+            "title": "Time Preference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "preferred_date",
+          "reason_category"
+        ],
+        "title": "CreateAppointmentRequest",
         "type": "object"
       },
       "CreateCommentRequest": {
@@ -997,6 +1256,14 @@
       },
       "MeResponse": {
         "properties": {
+          "account_kind": {
+            "enum": [
+              "clinic_user",
+              "patient"
+            ],
+            "title": "Account Kind",
+            "type": "string"
+          },
           "display_name": {
             "title": "Display Name",
             "type": "string"
@@ -1017,19 +1284,46 @@
             "title": "Id",
             "type": "string"
           },
+          "landing_path": {
+            "enum": [
+              "/patients",
+              "/patient"
+            ],
+            "title": "Landing Path",
+            "type": "string"
+          },
+          "linked_patient_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked Patient Id"
+          },
           "memberships": {
             "items": {
               "$ref": "#/components/schemas/MembershipResponse"
             },
             "title": "Memberships",
             "type": "array"
+          },
+          "preferred_name": {
+            "title": "Preferred Name",
+            "type": "string"
           }
         },
         "required": [
           "id",
           "email",
           "display_name",
-          "memberships"
+          "preferred_name",
+          "memberships",
+          "account_kind",
+          "landing_path"
         ],
         "title": "MeResponse",
         "type": "object"
@@ -1218,7 +1512,10 @@
             "enum": [
               "mention",
               "assignment",
-              "ai_job_completed"
+              "ai_job_completed",
+              "care_update",
+              "appointment_update",
+              "report_released"
             ],
             "title": "Event Type",
             "type": "string"
@@ -1239,6 +1536,18 @@
               }
             ],
             "title": "Patient Id"
+          },
+          "read_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Read At"
           },
           "recipient_id": {
             "format": "uuid",
@@ -1279,6 +1588,223 @@
         "title": "NotificationResponse",
         "type": "object"
       },
+      "PatientAiQuestionRequest": {
+        "properties": {
+          "question": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "PatientAiQuestionRequest",
+        "type": "object"
+      },
+      "PatientDashboardResponse": {
+        "properties": {
+          "appointments": {
+            "items": {
+              "$ref": "#/components/schemas/AppointmentRequestResponse"
+            },
+            "title": "Appointments",
+            "type": "array"
+          },
+          "clinic_id": {
+            "format": "uuid",
+            "title": "Clinic Id",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/PatientSafeEntryResponse"
+            },
+            "title": "History",
+            "type": "array"
+          },
+          "instructions": {
+            "items": {
+              "$ref": "#/components/schemas/PatientSafeEntryResponse"
+            },
+            "title": "Instructions",
+            "type": "array"
+          },
+          "observations": {
+            "items": {
+              "$ref": "#/components/schemas/PatientObservationResponse"
+            },
+            "title": "Observations",
+            "type": "array"
+          },
+          "patient_id": {
+            "format": "uuid",
+            "title": "Patient Id",
+            "type": "string"
+          },
+          "reports": {
+            "items": {
+              "$ref": "#/components/schemas/PatientReportResponse"
+            },
+            "title": "Reports",
+            "type": "array"
+          },
+          "summaries": {
+            "items": {
+              "$ref": "#/components/schemas/PatientSafeEntryResponse"
+            },
+            "title": "Summaries",
+            "type": "array"
+          },
+          "synthetic_identifier": {
+            "title": "Synthetic Identifier",
+            "type": "string"
+          },
+          "visible_tasks": {
+            "items": {
+              "$ref": "#/components/schemas/PatientVisibleTaskResponse"
+            },
+            "title": "Visible Tasks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "patient_id",
+          "display_name",
+          "synthetic_identifier",
+          "clinic_id",
+          "summaries",
+          "instructions",
+          "history",
+          "appointments",
+          "reports",
+          "observations",
+          "visible_tasks"
+        ],
+        "title": "PatientDashboardResponse",
+        "type": "object"
+      },
+      "PatientObservationResponse": {
+        "properties": {
+          "observation_type": {
+            "enum": [
+              "peak_flow",
+              "sleep_hours",
+              "symptom_score"
+            ],
+            "title": "Observation Type",
+            "type": "string"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "observation_type",
+          "value",
+          "unit",
+          "observed_at"
+        ],
+        "title": "PatientObservationResponse",
+        "type": "object"
+      },
+      "PatientPortalEntryResponse": {
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/PatientSafeEntryResponse"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "entry",
+          "message"
+        ],
+        "title": "PatientPortalEntryResponse",
+        "type": "object"
+      },
+      "PatientReportResponse": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "patient_safe_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient Safe Summary"
+          },
+          "released_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Released At"
+          },
+          "report_type": {
+            "enum": [
+              "lab",
+              "imaging",
+              "care_plan",
+              "other"
+            ],
+            "title": "Report Type",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "preparing",
+              "available",
+              "withdrawn"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "report_type",
+          "status",
+          "released_at",
+          "patient_safe_summary"
+        ],
+        "title": "PatientReportResponse",
+        "type": "object"
+      },
       "PatientResponse": {
         "properties": {
           "clinic_id": {
@@ -1307,6 +1833,41 @@
           "display_name"
         ],
         "title": "PatientResponse",
+        "type": "object"
+      },
+      "PatientSafeEntryResponse": {
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "entry_type": {
+            "enum": [
+              "patient_summary",
+              "patient_instruction",
+              "patient_insight"
+            ],
+            "title": "Entry Type",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "entry_type",
+          "content",
+          "occurred_at"
+        ],
+        "title": "PatientSafeEntryResponse",
         "type": "object"
       },
       "PatientSummaryReviewRequest": {
@@ -1416,6 +1977,62 @@
           "created_at"
         ],
         "title": "PatientSummaryReviewResponse",
+        "type": "object"
+      },
+      "PatientVisibleTaskResponse": {
+        "properties": {
+          "due_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "patient_acknowledged_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient Acknowledged At"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "in_progress",
+              "completed",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "due_at",
+          "patient_acknowledged_at"
+        ],
+        "title": "PatientVisibleTaskResponse",
         "type": "object"
       },
       "ProviderUsageResponse": {
@@ -1931,6 +2548,46 @@
         "title": "SourceRecordResponse",
         "type": "object"
       },
+      "SymptomLogRequest": {
+        "properties": {
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "severity": {
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Severity",
+            "type": "integer"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "symptom": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Symptom",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symptom",
+          "severity",
+          "started_at"
+        ],
+        "title": "SymptomLogRequest",
+        "type": "object"
+      },
       "TimelineEntryResponse": {
         "properties": {
           "author_id": {
@@ -2025,6 +2682,38 @@
           "occurred_at"
         ],
         "title": "TimelineEntryResponse",
+        "type": "object"
+      },
+      "UpdateAccountProfileRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "birth_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birth Date"
+          },
+          "preferred_name": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferred Name"
+          }
+        },
+        "title": "UpdateAccountProfileRequest",
         "type": "object"
       },
       "UpdateCareTaskRequest": {
@@ -3014,6 +3703,122 @@
         ]
       }
     },
+    "/me/avatar": {
+      "post": {
+        "operationId": "upload_avatar_me_avatar_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvatarUploadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvatarUploadResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upload Avatar",
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/me/profile": {
+      "get": {
+        "operationId": "get_account_profile_me_profile_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountProfileResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Account Profile",
+        "tags": [
+          "account"
+        ]
+      },
+      "patch": {
+        "operationId": "update_account_profile_me_profile_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAccountProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountProfileResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Account Profile",
+        "tags": [
+          "account"
+        ]
+      }
+    },
     "/notifications": {
       "get": {
         "operationId": "list_notifications_notifications_get",
@@ -3092,6 +3897,54 @@
         ]
       }
     },
+    "/notifications/{notification_id}/read": {
+      "post": {
+        "operationId": "mark_notification_read_notifications__notification_id__read_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "notification_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Notification Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Mark Notification Read",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
     "/patient-summary-reviews/{review_id}/review": {
       "post": {
         "operationId": "review_patient_summary_patient_summary_reviews__review_id__review_post",
@@ -3147,6 +4000,170 @@
         "summary": "Review Patient Summary",
         "tags": [
           "AI scribe review"
+        ]
+      }
+    },
+    "/patient/ai-question": {
+      "post": {
+        "operationId": "record_ai_question_patient_ai_question_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatientAiQuestionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientPortalEntryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Record Ai Question",
+        "tags": [
+          "patient portal"
+        ]
+      }
+    },
+    "/patient/appointments": {
+      "post": {
+        "operationId": "create_appointment_patient_appointments_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAppointmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentRequestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Appointment",
+        "tags": [
+          "patient portal"
+        ]
+      }
+    },
+    "/patient/dashboard": {
+      "get": {
+        "operationId": "patient_dashboard_patient_dashboard_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientDashboardResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Patient Dashboard",
+        "tags": [
+          "patient portal"
+        ]
+      }
+    },
+    "/patient/symptoms": {
+      "post": {
+        "operationId": "log_symptoms_patient_symptoms_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SymptomLogRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientPortalEntryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Log Symptoms",
+        "tags": [
+          "patient portal"
         ]
       }
     },

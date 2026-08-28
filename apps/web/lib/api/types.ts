@@ -6,8 +6,32 @@ export type CurrentUser = {
   id: string;
   email: string | null;
   display_name: string;
+  preferred_name: string;
   memberships: Membership[];
+  linked_patient_id: string | null;
+  account_kind: "clinic_user" | "patient";
+  landing_path: "/patients" | "/patient";
 };
+
+export type AccountProfile = {
+  id: string; email: string | null; display_name: string; preferred_name: string;
+  birth_date: string | null; avatar_path: string | null; avatar_url: string | null;
+  memberships: Membership[]; linked_patient_id: string | null;
+};
+
+export type Notification = {
+  id: string; clinic_id: string; patient_id: string | null; recipient_id: string;
+  event_type: "mention" | "assignment" | "ai_job_completed" | "care_update" | "appointment_update" | "report_released";
+  resource_type: string; resource_id: string; status: "pending" | "delivered" | "failed" | "dismissed";
+  read_at: string | null; created_at: string;
+};
+
+export type PatientSafeEntry = { id: string; entry_type: "patient_summary" | "patient_instruction" | "patient_insight"; content: string; occurred_at: string };
+export type AppointmentRequest = { id: string; preferred_date: string; time_preference: "morning" | "afternoon" | "either"; reason_category: "follow_up" | "new_symptom" | "medication" | "other"; note: string | null; status: "requested" | "confirmed" | "declined" | "cancelled"; created_at: string };
+export type PatientReport = { id: string; title: string; report_type: "lab" | "imaging" | "care_plan" | "other"; status: "preparing" | "available" | "withdrawn"; released_at: string | null; patient_safe_summary: string | null };
+export type PatientObservation = { observation_type: "peak_flow" | "sleep_hours" | "symptom_score"; value: number; unit: string; observed_at: string };
+export type PatientVisibleTask = { id: string; title: string; status: CareTask["status"]; due_at: string | null; patient_acknowledged_at: string | null };
+export type PatientDashboard = { patient_id: string; display_name: string; synthetic_identifier: string; clinic_id: string; summaries: PatientSafeEntry[]; instructions: PatientSafeEntry[]; history: PatientSafeEntry[]; appointments: AppointmentRequest[]; reports: PatientReport[]; observations: PatientObservation[]; visible_tasks: PatientVisibleTask[] };
 
 export type Patient = {
   id: string;

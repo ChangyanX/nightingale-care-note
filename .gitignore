@@ -12,6 +12,8 @@
 # Node / Next.js
 node_modules/
 .next/
+.next-playwright/
+.next-verify/
 out/
 coverage/
 *.tsbuildinfo

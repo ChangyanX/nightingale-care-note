@@ -46,6 +46,17 @@ an ignored `.env` only for the backend service.
 
 Local synthetic accounts use the password `NightingaleDemo2026!` and the `@nightingale.local` email addresses declared in `supabase/seed.sql`. These credentials are for the disposable local stack only; do not reuse them in a hosted project.
 
+| Demo role | Clinic A | Clinic B |
+|---|---|---|
+| Admin | `admin.a@nightingale.local` | — |
+| Staff | `staff.a@nightingale.local` | `staff.b@nightingale.local` |
+| Clinician | `clinician.a@nightingale.local` | `clinician.b@nightingale.local` |
+| Patient | `patient.a@nightingale.local`, `patient.a2@nightingale.local`, `patient.a3@nightingale.local` | `patient.b@nightingale.local`, `patient.b2@nightingale.local` |
+
+Every identity and care record is fictional. Staff, clinicians, and admins land
+on the clinic patient list; patients land on their own `/patient` dashboard and
+are explicitly denied the patient-list API.
+
 Hosted demo identities use generated passwords and are seeded only after an
 explicit project-reference check; see the hosted section of
 [docs/supabase-setup.md](docs/supabase-setup.md).
@@ -205,6 +216,19 @@ missing, a tracked credential pattern is detected, or the working tree is dirty.
 Current gate state is documented in
 [docs/release-status.md](docs/release-status.md).
 
+For a reproducible warm-path Top Card benchmark, start the API, export or paste
+a short-lived staff/clinician token without placing it in command arguments,
+then run:
+
+```bash
+make benchmark-glance PATIENT_ID=40000000-0000-0000-0000-000000000001
+```
+
+The command performs 10 warm-ups and 120 sequential measured requests, reports
+errors plus P50/P95/P99, and enforces the 300 ms P95 target. The automated suite
+also has a 120-request in-process approximation; only the script includes real
+network, authentication, Supabase Data API, and RLS overhead.
+
 ### Opt-in genuine AI smoke test
 
 Phase 4 uses Groq's free plan with `openai/gpt-oss-20b`. Create a Groq API key,
@@ -233,7 +257,7 @@ locally installed model. Provider facts and runtime evidence are documented in
 
 ## Security boundaries
 
-Normal API requests forward the caller's Supabase JWT to the Data API so PostgreSQL RLS evaluates the real caller. The service-role credential is reserved for the internal worker and administrative setup. Patient-facing queries use dedicated restricted views and never fetch internal comments or raw AI-scribed notes.
+Normal API requests forward the caller's Supabase JWT to the Data API so PostgreSQL RLS evaluates the real caller. The service-role credential is reserved for the internal worker and administrative setup. Patient-facing queries use dedicated endpoints, reduced response schemas, and RLS policies; they never fetch internal comments or raw AI-scribed notes.
 
 All data in this repository is synthetic. Every LLM-bound path must pass through
 the verified redaction guard in `services/backend/app/domain/redaction`; provider
@@ -245,5 +269,9 @@ and private object storage use the selected provider's encryption-at-rest contro
 See [the build phases](docs/README.md), [Phase 1 tasks](docs/phase-1/README.md),
 the [Phase 1–4 optional-deliverables audit](docs/phase-1-4-optional-deliverables.md),
 and [Phase 4 AI task breakdown](docs/phase-4/README.md) for the implementation plan.
+
+Role routing, account/session behavior, the non-negotiable patient-safe DTO/RLS
+boundary, lightweight portal trade-offs, and both demo flows are documented in
+[Role portals and privacy](docs/role-portals-and-privacy.md).
 
 Supabase local and hosted setup is documented in [docs/supabase-setup.md](docs/supabase-setup.md). Credential ownership, local file placement, application token flow, deployment secrets, and rotation are documented in [docs/credentials-and-access.md](docs/credentials-and-access.md).

@@ -252,7 +252,7 @@ async def list_notifications(
         {
             "select": (
                 "id,clinic_id,patient_id,recipient_id,event_type,resource_type,resource_id,"
-                "status,created_at"
+                "status,read_at,created_at"
             ),
             "recipient_id": f"eq.{auth.user_id}",
             "order": "created_at.desc",
@@ -260,6 +260,24 @@ async def list_notifications(
         },
     )
     return [NotificationResponse.model_validate(row) for row in rows]
+
+
+@router.post(
+    "/notifications/{notification_id}/read",
+    response_model=NotificationResponse,
+    tags=["notifications"],
+)
+async def mark_notification_read(
+    notification_id: UUID,
+    auth: AuthDependency,
+    settings: SettingsDependency,
+) -> NotificationResponse:
+    row = await gateway(settings).rpc(
+        "mark_notification_read",
+        auth.access_token,
+        {"p_notification_id": str(notification_id)},
+    )
+    return NotificationResponse.model_validate(row)
 
 
 @router.post(
@@ -272,16 +290,12 @@ async def dismiss_notification(
     auth: AuthDependency,
     settings: SettingsDependency,
 ) -> NotificationResponse:
-    rows = await gateway(settings).mutate(
-        "PATCH",
-        "notification_outbox",
+    row = await gateway(settings).rpc(
+        "dismiss_own_notification",
         auth.access_token,
-        payload={"status": "dismissed"},
-        params={"id": f"eq.{notification_id}"},
+        {"p_notification_id": str(notification_id)},
     )
-    if not rows:
-        raise HTTPException(status_code=404, detail="Notification not found")
-    return NotificationResponse.model_validate(rows[0])
+    return NotificationResponse.model_validate(row)
 
 
 @router.get(
