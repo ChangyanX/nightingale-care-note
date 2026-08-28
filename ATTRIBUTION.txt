@@ -1,0 +1,180 @@
+NIGHTINGALE CARE NOTE - THIRD-PARTY ATTRIBUTIONS
+================================================
+
+Last updated: 2026-08-28
+
+This project uses the third-party software and models listed below. Exact
+resolved package versions are recorded in pnpm-lock.yaml and
+services/backend/uv.lock. Copyright remains with the respective authors.
+License identifiers below use SPDX notation where available.
+
+Production frontend dependencies
+--------------------------------
+
+@fontsource/dm-sans
+  DM Sans font files: SIL Open Font License 1.1 (OFL-1.1)
+  Package code: MIT
+  https://fontsource.org/fonts/dm-sans
+
+@supabase/ssr, @supabase/supabase-js
+  License: MIT
+  https://github.com/supabase/ssr
+  https://github.com/supabase/supabase-js
+
+@tanstack/react-query
+  License: MIT
+  https://github.com/TanStack/query
+
+Next.js
+  License: MIT
+  https://github.com/vercel/next.js
+
+openapi-fetch
+  License: MIT
+  https://github.com/openapi-ts/openapi-typescript
+
+React, React DOM
+  License: MIT
+  https://github.com/facebook/react
+
+Production backend dependencies
+-------------------------------
+
+cryptography
+  License: Apache-2.0 OR BSD-3-Clause
+  https://github.com/pyca/cryptography
+
+FastAPI
+  License: MIT
+  https://github.com/fastapi/fastapi
+
+HTTPX
+  License: BSD-3-Clause
+  https://github.com/encode/httpx
+
+pydantic-settings
+  License: MIT
+  https://github.com/pydantic/pydantic-settings
+
+Uvicorn
+  License: BSD-3-Clause
+  https://github.com/encode/uvicorn
+
+Development, test, and build dependencies
+-----------------------------------------
+
+ESLint, eslint-config-next
+  License: MIT
+  https://github.com/eslint/eslint
+  https://github.com/vercel/next.js
+
+Hatchling
+  License: MIT
+  https://github.com/pypa/hatch
+
+Hypothesis
+  License: MPL-2.0
+  https://github.com/HypothesisWorks/hypothesis
+
+mypy
+  License: MIT
+  https://github.com/python/mypy
+
+openapi-typescript
+  License: MIT
+  https://github.com/openapi-ts/openapi-typescript
+
+pglast
+  License: PostgreSQL
+  https://github.com/lelit/pglast
+
+Playwright for Python and @playwright/test
+  License: Apache-2.0
+  https://github.com/microsoft/playwright-python
+  https://github.com/microsoft/playwright
+
+pre-commit
+  License: MIT
+  https://github.com/pre-commit/pre-commit
+
+pytest
+  License: MIT
+  https://github.com/pytest-dev/pytest
+
+pytest-asyncio
+  License: Apache-2.0
+  https://github.com/pytest-dev/pytest-asyncio
+
+Ruff
+  License: MIT
+  https://github.com/astral-sh/ruff
+
+Supabase CLI
+  License: MIT
+  https://github.com/supabase/cli
+
+TypeScript
+  License: Apache-2.0
+  https://github.com/microsoft/TypeScript
+
+uv
+  License: Apache-2.0 OR MIT
+  https://github.com/astral-sh/uv
+
+GitHub Actions used by this repository
+--------------------------------------
+
+actions/checkout, actions/setup-python
+  License: MIT
+  https://github.com/actions/checkout
+  https://github.com/actions/setup-python
+
+astral-sh/setup-uv
+  License: MIT
+  https://github.com/astral-sh/setup-uv
+
+Models and model runtimes
+-------------------------
+
+OpenAI gpt-oss-20b (configured as openai/gpt-oss-20b through Groq)
+  License: Apache-2.0
+  https://huggingface.co/openai/gpt-oss-20b
+
+Qwen3 4B (optional local model, configured as qwen3:4b)
+  License: Apache-2.0
+  https://huggingface.co/Qwen/Qwen3-4B
+
+Ollama (optional local model runtime)
+  License: MIT
+  https://github.com/ollama/ollama
+
+Services and infrastructure
+---------------------------
+
+Groq API
+  Hosted inference service. Use is governed by Groq's Terms of Use and the
+  applicable model license. Groq is not redistributed by this repository.
+  https://groq.com/terms-of-use/
+
+Supabase
+  The open-source platform is Apache-2.0. Hosted service use is also governed
+  by Supabase's terms. This project uses PostgreSQL, Auth, Realtime, and API
+  components through local Supabase or a configured hosted project.
+  https://github.com/supabase/supabase
+  https://supabase.com/terms
+
+PostgreSQL
+  License: PostgreSQL
+  https://www.postgresql.org/about/licence/
+
+Notes
+-----
+
+- The internal @nightingale/design-tokens workspace package is original project
+  code and is not a third-party dependency.
+- Transitive dependencies and their resolved versions are recorded in the lock
+  files. Their own license notices remain controlling.
+- Product and company names are trademarks of their respective owners. Listing
+  them here does not imply endorsement.
+- This file is an attribution inventory, not legal advice and not a replacement
+  for the full license texts supplied by upstream projects.
