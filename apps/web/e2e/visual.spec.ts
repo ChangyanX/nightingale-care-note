@@ -4,14 +4,27 @@ test("sign-in remains readable at desktop and mobile widths", async ({ page }) =
   await page.emulateMedia({ colorScheme: "light" });
   await page.goto("/sign-in");
   await expect(page.locator("html")).toHaveAttribute("data-app-ready", "true");
-  await expect(page.getByRole("heading", { name: "Open the shared patient story." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sign in to your clinic workspace" })).toBeVisible();
+  await expect(page.getByText(".env.hosted-demo")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Staff" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Open Next.js Dev Tools" })).toHaveCount(0);
   await expect(page).toHaveScreenshot("sign-in.png", {
     animations: "disabled",
     fullPage: true,
   });
 });
 
-test("dark mode keeps the editorial hierarchy and contrast", async ({ page }) => {
+test("synthetic personas are isolated to the demo route", async ({ page }) => {
+  await page.goto("/demo");
+  await expect(page.getByText("Demo environment", { exact: true })).toBeVisible();
+  await expect(page.getByText("Synthetic patient data only. Do not enter real patient information.")).toBeVisible();
+
+  await page.getByRole("button", { name: /Clinician/ }).click();
+  await expect(page.getByLabel("Work email")).toHaveValue("clinician.a@nightingale.local");
+  await expect(page.locator('input[autocomplete="current-password"]')).toBeFocused();
+});
+
+test("dark mode keeps the calm hierarchy and contrast", async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("nightingale-theme", "dark"));
   await page.goto("/sign-in");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");

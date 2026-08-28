@@ -31,8 +31,13 @@ verify this constraint.
 
 ## Quick start
 
+For the disposable local stack, the committed template contains localhost
+defaults. Create the ignored backend and browser environment files before
+starting the services:
+
 ```bash
 cp .env.example .env
+grep '^NEXT_PUBLIC_' .env.example > apps/web/.env.local
 make install
 make db-start
 make db-reset
@@ -40,7 +45,29 @@ make dev-api
 make dev-web
 ```
 
-The web application runs at `http://localhost:3000`; the API runs at `http://localhost:8000`; API documentation is available at `http://localhost:8000/docs`.
+If `pnpm exec supabase status -o env` reports values different from the
+template, update the corresponding Supabase URL and publishable-key entries in
+both files. Next.js reads `apps/web/.env.local`; it does not load the root
+`.env`.
+
+For a hosted environment, obtain and enter values as follows:
+
+| Value | Local file | Obtain from | Required when |
+|---|---|---|---|
+| `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | `.env` | Supabase project API settings | Running the API |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `apps/web/.env.local` | Same browser-safe Supabase URL and publishable key | Running the web app |
+| `NEXT_PUBLIC_API_URL` | `apps/web/.env.local` | URL where FastAPI is deployed | Web app calls a non-local API |
+| `SUPABASE_SERVICE_ROLE_KEY` | `.env` or a worker secret store | Supabase project API settings | Controlled setup or worker jobs only; otherwise leave empty |
+| `DATABASE_URL` | `.env` or a migration secret store | Supabase database connection settings | Direct database access only |
+| `LLM_API_KEY` | `.env` or a worker secret store | Groq API Keys | Genuine AI calls only |
+
+Record variable names and where to obtain them, but never record real keys,
+passwords, connection strings, or tokens in this README, `.env.example`, Git,
+issues, screenshots, or chat. Keep real values only in ignored environment
+files, deployment secret stores, or a password manager. See
+[Credentials and Access](docs/credentials-and-access.md) for the full boundary.
+
+The web application runs at `http://localhost:3000`; the API runs at `http://localhost:8000`; API documentation is available at `http://localhost:8000/docs`. The conventional clinic sign-in is `/sign-in`. Synthetic persona shortcuts are deliberately isolated to `/demo`; selecting a persona fills its email but authentication still establishes the server-authorized role and clinic scope.
 
 Alternatively, open the repository in a Dev Container or build the isolated
 services with `docker compose build`. Compose never supplies secrets; it reads
@@ -75,7 +102,8 @@ make dev-web
 
 | Surface | Local address | Purpose |
 |---|---|---|
-| Web application | [http://localhost:3000](http://localhost:3000) | Sign in and use the Care Note UI |
+| Web application | [http://localhost:3000/sign-in](http://localhost:3000/sign-in) | Production-style clinic sign-in without persona shortcuts |
+| Synthetic demo access | [http://localhost:3000/demo](http://localhost:3000/demo) | Choose a synthetic persona, then authenticate as that server-authorized account |
 | Swagger UI | [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) | Browse and execute API requests |
 | ReDoc | [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc) | Read-only API reference |
 | OpenAPI document | [http://127.0.0.1:8000/openapi.json](http://127.0.0.1:8000/openapi.json) | Import into Postman, Insomnia, or another client |
@@ -259,14 +287,75 @@ locally installed model. Provider facts and runtime evidence are documented in
 
 ## Security boundaries
 
-Normal API requests forward the caller's Supabase JWT to the Data API so PostgreSQL RLS evaluates the real caller. The service-role credential is reserved for the internal worker and administrative setup. Patient-facing queries use dedicated endpoints, reduced response schemas, and RLS policies; they never fetch internal comments or raw AI-scribed notes.
+### Where redaction happens
 
-All data in this repository is synthetic. Every LLM-bound path must pass through
-the verified redaction guard in `services/backend/app/domain/redaction`; provider
-adapters must not accept raw text. The deterministic guard covers configured
-names and common labelled identifiers, but it is prototype protection rather
-than production-grade de-identification. Deployed services use TLS; PostgreSQL
-and private object storage use the selected provider's encryption-at-rest controls.
+All repository data is synthetic. Even so, every LLM-bound text path is
+redacted inside the backend before a provider can receive it:
+
+1. `services/backend/app/worker/scribe.py` loads the source record and calls
+   `redact_for_llm(...)` before `provider.generate(...)`.
+2. `services/backend/app/domain/redaction/service.py` normalizes the text,
+   replaces configured names plus supported names, IC/ID numbers, phone
+   numbers, email addresses, dates of birth, addresses, locations, and
+   organization identifiers, and then verifies that supported patterns no
+   longer remain.
+3. The redactor returns a `VerifiedRedaction` value. The provider interface in
+   `services/backend/app/infrastructure/llm/base.py` accepts that verified type,
+   not a raw string. Groq, Ollama, and fake adapters implement this interface.
+4. Empty input or residual supported identifiers fail closed. Worker logs and
+   stored errors contain job IDs, counts, model/request metadata, and sanitized
+   error codes only; they do not contain prompts or note bodies.
+
+This deterministic guard is prototype protection, not a claim of production-
+grade de-identification. Tests are in
+`services/backend/tests/test_redaction.py`,
+`services/backend/tests/test_scribe_worker.py`, and provider contract tests.
+Run the focused checks with:
+
+```bash
+cd services/backend
+uv run pytest tests/test_redaction.py tests/test_scribe_worker.py
+```
+
+### How RBAC is enforced
+
+Authorization is enforced at the server and database layers, not by hidden UI
+controls:
+
+1. `services/backend/app/auth.py` validates the bearer token with Supabase Auth
+   and creates the request's authenticated user context.
+2. `services/backend/app/gateway.py` forwards that same caller JWT to the
+   Supabase Data API. Normal user routes never substitute the service-role key,
+   so PostgreSQL evaluates every query as the signed-in user.
+3. `supabase/migrations/202608260001_foundation.sql` enables RLS on exposed
+   clinical tables. Its `has_clinic_role(...)` and `is_linked_patient(...)`
+   helpers enforce clinic membership and patient ownership. Separate policies
+   prevent staff from writing clinician entries/sections and clinicians from
+   writing staff-owned content; admins have oversight without clinical-write
+   authority.
+4. Patient reads are allowlisted to linked, patient-facing summaries,
+   instructions, and their own patient insights. Patients have no comments
+   policy and cannot read raw AI-scribed entries, internal versions, audit
+   events, or restricted provenance targets. Dedicated patient endpoints and
+   reduced response schemas provide an additional API boundary.
+5. Later migrations preserve the same boundary for collaboration/provenance,
+   revision/revert operations, optional portal data, and private consult
+   recordings. Privileged service credentials are confined to worker/setup
+   configuration and are never exposed to browser code.
+
+The always-on RBAC tests inspect the complete policy contract; optional live
+tests exercise the policies against a migrated Supabase instance with real
+short-lived synthetic-user tokens. Run the focused always-on checks with:
+
+```bash
+cd services/backend
+uv run pytest tests/test_rbac_scope.py tests/test_patient_read_api.py
+```
+
+See [Supabase setup](docs/supabase-setup.md) for the environment variables that
+enable the live RLS integration cases. Deployed services use TLS; PostgreSQL
+and private object storage use the selected provider's encryption-at-rest
+controls.
 
 See [the build phases](docs/README.md), [Phase 1 tasks](docs/phase-1/README.md),
 the [Phase 1–4 optional-deliverables audit](docs/phase-1-4-optional-deliverables.md),
