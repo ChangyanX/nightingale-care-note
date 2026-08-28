@@ -1,6 +1,6 @@
 # P4-T05 — AI Entry and Provenance Persistence
 
-**Status:** Pending  
+**Status:** Implemented locally; migration and genuine hosted run pending
 **Full estimate:** 1 hour  
 **16-hour path:** 30 minutes  
 **Dependencies:** P4-T03, P4-T04, Phase 3 provenance schema
@@ -36,13 +36,35 @@ timeline entry linked to the originating source record.
 
 ## Acceptance criteria
 
-- [ ] Each successful job resolves to exactly one AI entry.
-- [ ] Entry author role is `system` and type matches interaction type.
-- [ ] Initial history and source pointer resolve.
-- [ ] Patient and cross-clinic reads are denied.
-- [ ] Retrying after an uncertain commit produces no duplicate.
+- [x] Each successful job resolves to exactly one AI entry.
+- [x] Entry author role is `system` and type matches interaction type.
+- [x] Initial history and source pointer resolve.
+- [x] Patient and cross-clinic reads are denied.
+- [x] Retrying after an uncertain commit produces no duplicate.
+
+## Implementation evidence
+
+- `202608280003_ai_persistence.sql` owns the transaction that locks and
+  re-resolves the job, source record, and Care Note; creates the system entry,
+  version-one snapshot, exact-span suggested highlights, and safe audit event;
+  links `output_entry_id`; and only then marks the job succeeded.
+- `prepare_scribe_persistence(...)` produces deterministic NFC content and
+  Unicode code-point offsets from the validated structured result. The
+  database highlight trigger independently verifies every quote/span pair.
+- `SupabaseWorkerBackend.complete(...)` is the concrete service-role adapter
+  that sends only the validated persistence payload to the transaction RPC.
+  Source loading is injected separately and ordinary FastAPI requests never
+  receive the service-role credential.
+- `test_scribe_persistence.py` covers all three interaction mappings, SQL
+  parsing and transaction ownership, exact offsets, service-role RPC wiring,
+  and the complete worker-to-writer path using synthetic fixtures only.
+
+Local completion does not claim a genuine provider or hosted database run.
+Apply migration `202608280003` and run one synthetic doctor-consult job in the
+target environment before recording final live evidence.
 
 ## Done when
 
-A genuine and a fixture-backed result appear as clearly labelled, source-linked
-AI timeline entries without weakening the ordinary caller RLS model.
+A fixture-backed result is proven locally. The task becomes fully evidenced
+when a genuine synthetic result appears as a clearly labelled, source-linked AI
+timeline entry in the hosted environment without weakening caller RLS.

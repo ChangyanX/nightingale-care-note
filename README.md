@@ -277,8 +277,10 @@ make smoke-llm-patient
 The commands perform deterministic redaction before invoking Groq strict JSON
 schema mode. Output contains only provider/model/request/token/count metadata
 and never prints source or generated clinical text. Smoke responses are not
-persisted; the durable worker path separately records job progress and
-sanitized provider usage metadata.
+persisted. Durable jobs use the worker's service-role backend and the atomic
+`complete_ai_scribe_job` RPC to create one internal system entry, its immutable
+first version, exact-span suggested highlights, safe audit metadata, and the
+completed job link in one transaction.
 
 For a fully local second adapter, set `LLM_PROVIDER=ollama`, point
 `LLM_BASE_URL` at the loopback Ollama OpenAI-compatible endpoint, and choose a

@@ -51,13 +51,13 @@ The AI pipeline creates a genuine LLM-generated consult summary, clearly labelle
 - [ ] Redaction tests cover names, identity numbers, phone numbers, and email addresses.
 - [ ] Raw request bodies and secrets do not appear in application logs.
 - [ ] A submitted source creates one durable job with visible status.
-- [ ] Retrying a job does not create duplicate AI entries or highlights.
-- [ ] The worker stores a valid AI-scribed entry only after structured output validation.
+- [x] Retrying a job does not create duplicate AI entries or highlights.
+- [x] The worker stores a valid AI-scribed entry only after structured output validation.
 - [ ] At least one demo flow invokes a genuine LLM and persists its validated structured result.
-- [ ] Every AI entry is visibly system-authored and typed correctly.
-- [ ] Every AI entry points to its originating interaction/source record.
-- [ ] Every AI-derived highlight carries an exact source entry, historical version, source span, quoted-text match, and short risk reason.
-- [ ] An AI suggestion without exact source resolution is rejected and never appears in the Glance View.
+- [x] Every AI entry is visibly system-authored and typed correctly.
+- [x] Every AI entry points to its originating interaction/source record.
+- [x] Every AI-derived highlight carries an exact source entry, historical version, source span, quoted-text match, and short risk reason.
+- [x] An AI suggestion without exact source resolution is rejected and never appears in the Glance View.
 - [ ] A clinician can accept or reject each highlight quickly.
 - [ ] Accepted clinician information outranks conflicting AI information; unresolved conflicts are flagged.
 - [ ] Ranking factors are inspectable in the UI or API response.

@@ -19,14 +19,14 @@ uploads, repository-visibility changes, and email are exclusively user actions.
 | Frontend data boundary | Passed locally | Automated check permits browser Supabase Auth/Realtime invalidation but rejects direct Data API, RPC, Storage, and Functions access | Preserve the boundary check in CI/pre-commit |
 | Browser visual/keyboard checks | Passed locally | 12 desktop/mobile Chromium checks pass, including patient routing, logout, password visibility, and theme persistence | Recheck after UI changes |
 | Phase 1-4 optional deliverables | Implemented locally | Consolidated evidence matrix covers every optional item | Run hosted/live-provider gates separately |
-| SQL parse/contracts | Passed locally | Versioned contracts pass; migration `202608280002` applied locally and `db lint` reports no schema errors | Apply the pending migration to the hosted environment |
+| SQL parse/contracts | Passed locally | Versioned contracts pass; the new atomic AI persistence migration parses successfully | Apply migrations through `202608280003` to local and hosted environments, then run `db lint` |
 | Tracked secret patterns | Passed after remediation | No current tracked Groq-key-like value detected | Rotate the previously exposed Groq key before any live run |
 | RBAC/RLS | Partial | Local tests deny patients the clinical list/detail/timeline/Glance surface and enforce the reduced patient DTO; five hosted tests remain skipped | Run patient/staff/clinician/admin/second-clinic hosted walkthrough |
 | Revisions/concurrency | Partial | Local API/SQL contracts pass | Run live same-resource and different-resource concurrency checks |
 | Exact highlight provenance | Implemented locally | Exact resolver, manual/AI tests, database contracts, review API/UI, bulk review, and source navigation exist | Run hosted pointer walkthrough |
 | Adaptive importance | Implemented locally | Bounded/idempotent ranking, per-user event persistence, local embeddings, decay, authenticated API, reset, and UI feedback exist | Run hosted behavior walkthrough |
 | Genuine Groq generation | Partial | Adapter, fake-provider tests, and safe smoke command exist | Configure a newly rotated key and run genuine validated call |
-| AI entry/highlight persistence | Missing | Job schema, worker core, and P4-T06 review flow exist | Complete P4-T05 atomic entry/highlight persistence |
+| AI entry/highlight persistence | Implemented locally | Atomic RPC, concrete service-role completion adapter, exact-span renderer, and fixture-backed worker integration tests pass | Apply migration `202608280003` and run one genuine synthetic hosted job |
 | Realtime collaboration | Implemented locally | Published tables, refetch/status/toast UI, comments, tasks, highlight review, job stages, and durable notifications exist | Capture two-session hosted evidence |
 | Glance performance | Partial | A 120-request in-process guard passes; timeline/task reads are parallel; the authenticated live benchmark records P50/P95/P99 and enforces P95 <= 300 ms | Run `make benchmark-glance` against the final hosted warm path and retain its output |
 | Technical brief | Missing | Blueprint and task plans exist | Produce and visually verify required 2-3 page PDF |
@@ -37,8 +37,8 @@ uploads, repository-visibility changes, and email are exclusively user actions.
 ## Immediate critical path
 
 1. Rotate the Groq key that appeared in the tracked template; place the new key only in ignored `.env`.
-2. Finish Phase 4 atomic AI persistence and run one genuine synthetic flow.
-3. Apply the pending migration and run hosted RLS/concurrency/two-session checks.
+2. Apply the Phase 4 persistence migration and run one genuine synthetic flow.
+3. Run hosted RLS/concurrency/two-session checks.
 4. Run the live Glance benchmark, prepare the technical brief/attribution, and rehearse the demo.
 5. Run strict `make release-check` on a clean final commit.
 

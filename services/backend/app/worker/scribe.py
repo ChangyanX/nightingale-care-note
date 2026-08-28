@@ -10,6 +10,15 @@ from app.infrastructure.llm import ProviderError, ProviderResult, ScribeProvider
 logger = logging.getLogger(__name__)
 
 
+class WorkerBackendError(RuntimeError):
+    """Sanitized worker storage failure safe to persist as a short code."""
+
+    def __init__(self, code: str, *, retryable: bool) -> None:
+        super().__init__(code)
+        self.code = code
+        self.retryable = retryable
+
+
 @dataclass(frozen=True, slots=True)
 class ScribeJob:
     id: UUID
@@ -83,6 +92,8 @@ class ScribeWorker:
             await self.backend.complete(job, redaction, result)
         except RedactionError:
             await self._fail(job, "redaction_failed", retryable=False)
+        except WorkerBackendError as error:
+            await self._fail(job, error.code, retryable=error.retryable)
         except ProviderError as error:
             await self._fail(job, error.code, retryable=error.retryable)
         except Exception:
