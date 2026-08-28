@@ -1,5 +1,7 @@
 # Nightingale Care Note
 
+[![Micro-tests](https://github.com/ChangyanX/nightingale-care-note/actions/workflows/micro-tests.yml/badge.svg?branch=main)](https://github.com/ChangyanX/nightingale-care-note/actions/workflows/micro-tests.yml?query=branch%3Amain)
+
 A provenance-first longitudinal Care Note for role-based clinical collaboration, AI-scribed timelines, revision history, and glanceable patient insights.
 
 ## Architecture
