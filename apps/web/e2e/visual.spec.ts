@@ -104,3 +104,26 @@ test("client-owned preferences do not cause hydration warnings", async ({ page }
   await expect(page.locator("html")).toHaveAttribute("data-app-ready", "true");
   expect(hydrationErrors).toEqual([]);
 });
+
+test("browser-extension body attributes do not cause hydration warnings", async ({ page }) => {
+  const hydrationErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && message.text().toLowerCase().includes("hydration")) {
+      hydrationErrors.push(message.text());
+    }
+  });
+  await page.addInitScript(() => {
+    const observer = new MutationObserver(() => {
+      if (document.body) {
+        document.body.classList.add("__bm__extension");
+        observer.disconnect();
+      }
+    });
+    observer.observe(document, { childList: true, subtree: true });
+  });
+
+  await page.goto("/sign-in");
+  await expect(page.locator("body")).toHaveClass(/__bm__extension/);
+  await expect(page.locator("html")).toHaveAttribute("data-app-ready", "true");
+  expect(hydrationErrors).toEqual([]);
+});
