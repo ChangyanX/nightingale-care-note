@@ -1,10 +1,21 @@
 import { expect, test } from "@playwright/test";
 
 test("sign-in remains readable at desktop and mobile widths", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "light" });
   await page.goto("/sign-in");
   await expect(page.locator("html")).toHaveAttribute("data-app-ready", "true");
   await expect(page.getByRole("heading", { name: "Open the shared patient story." })).toBeVisible();
   await expect(page).toHaveScreenshot("sign-in.png", {
+    animations: "disabled",
+    fullPage: true,
+  });
+});
+
+test("dark mode keeps the editorial hierarchy and contrast", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("nightingale-theme", "dark"));
+  await page.goto("/sign-in");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(page).toHaveScreenshot("sign-in-dark.png", {
     animations: "disabled",
     fullPage: true,
   });

@@ -23,6 +23,8 @@ For architecture, data-model, and security details, see [the project blueprint](
 Role routing, Account Settings, notification/session behavior, the patient-safe
 DTO/RLS boundary, and the intentionally lightweight portal scope are in
 [Role Portals, Account Security, and Patient Privacy](role-portals-and-privacy.md).
+The corresponding dark/daylight palette and component rules are documented in
+the [Nightingale Visual System](design-system.md).
 
 Hosted Supabase setup and the credential boundary are defined in
 [Supabase Setup](supabase-setup.md) and

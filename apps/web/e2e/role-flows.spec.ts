@@ -87,13 +87,13 @@ async function installPatientMocks(page: Page) {
               display_name: "Parker Patient (Synthetic)",
               synthetic_identifier: "SYN-A-001",
               clinic_id: "10000000-0000-0000-0000-000000000001",
-              summaries: [],
-              instructions: [],
-              history: [],
-              appointments: [],
-              reports: [],
-              observations: [],
-              visible_tasks: [],
+              summaries: [{ id: "71000000-0000-0000-0000-000000000001", entry_type: "patient_summary", content: "Your breathing plan is stable; keep tracking the evening cough.", occurred_at: "2026-08-27T09:00:00+08:00" }],
+              instructions: [{ id: "71000000-0000-0000-0000-000000000002", entry_type: "patient_instruction", content: "Record morning and evening peak flow for seven days.", occurred_at: "2026-08-27T09:05:00+08:00" }],
+              history: [{ id: "71000000-0000-0000-0000-000000000003", entry_type: "patient_insight", content: "Night cough was milder after keeping the room warm.", occurred_at: "2026-08-28T07:30:00+08:00" }],
+              appointments: [{ id: "72000000-0000-0000-0000-000000000001", preferred_date: "2026-09-02", time_preference: "morning", reason_category: "follow_up", note: null, status: "requested", created_at: "2026-08-28T08:00:00+08:00" }],
+              reports: [{ id: "73000000-0000-0000-0000-000000000001", title: "Synthetic respiratory review", report_type: "care_plan", status: "available", released_at: "2026-08-27T10:00:00+08:00", patient_safe_summary: "No urgent concern was identified in this synthetic review." }],
+              observations: [{ observation_type: "peak_flow", value: 410, unit: "L/min", observed_at: "2026-08-28T07:00:00+08:00" }, { observation_type: "sleep_hours", value: 7, unit: "hours", observed_at: "2026-08-28T07:00:00+08:00" }],
+              visible_tasks: [{ id: "74000000-0000-0000-0000-000000000001", title: "Complete the seven-day diary", status: "open", due_at: "2026-09-03T17:00:00+08:00", patient_acknowledged_at: null }],
             }
           : pathname === "/notifications"
             ? []
@@ -123,6 +123,10 @@ test("patient login lands on the own-account dashboard without requesting the pa
   const state = await installPatientMocks(page);
   await signInAsPatient(page);
   expect(state.patientListRequests).toBe(0);
+  await expect(page).toHaveScreenshot("patient-dashboard.png", {
+    animations: "disabled",
+    fullPage: true,
+  });
 });
 
 test("global logout clears the authenticated browser session and returns to sign-in", async ({
