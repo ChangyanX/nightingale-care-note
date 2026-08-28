@@ -91,7 +91,7 @@ export default function PatientPage() {
       window.setTimeout(() => setActivityToast(null), 4000);
     };
     const channel = supabase.channel(`patient-${patientId}`);
-    for (const table of ["entries", "care_tasks", "comments", "highlights", "ai_jobs"] as const) {
+    for (const table of ["entries", "care_tasks", "comments", "comment_reactions", "highlights", "ai_jobs"] as const) {
       channel.on("postgres_changes", { event: "*", schema: "public", table, filter: `patient_id=eq.${patientId}` }, () => refresh(readable(table)));
     }
     channel.subscribe((status) => setLiveStatus(status === "SUBSCRIBED" ? "connected" : status === "CHANNEL_ERROR" || status === "TIMED_OUT" ? "disconnected" : "connecting"));
@@ -209,7 +209,16 @@ export default function PatientPage() {
             ))}</div> : <div className="empty-state small"><h3>No open actions</h3><p>Completed work remains in the task history.</p></div>}
           </aside>
         </div>
-        <CollaborationPanel accessToken={data.accessToken} currentUserId={data.user.id} entries={data.timeline} comments={data.comments} canWrite={canWrite} onCreated={(comment) => setData({ ...data, comments: [...data.comments, comment] })} />
+        <CollaborationPanel
+          accessToken={data.accessToken}
+          currentUserId={data.user.id}
+          entries={data.timeline}
+          comments={data.comments}
+          canWrite={canWrite}
+          onCreated={(comment) => setData((current) => current ? { ...current, comments: [...current.comments, comment] } : current)}
+          onUpdated={(comment) => setData((current) => current ? { ...current, comments: current.comments.map((item) => item.id === comment.id ? comment : item) } : current)}
+          onDeleted={(commentId) => setData((current) => current ? { ...current, comments: current.comments.filter((item) => item.id !== commentId) } : current)}
+        />
       </main>
     </div>
   );

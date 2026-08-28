@@ -12,11 +12,11 @@ function testAccessToken() {
 }
 
 async function installPatientMocks(page: Page, account: "patient" | "clinician" = "patient") {
-  const state = { patientListRequests: 0, globalLogoutRequests: 0 };
+  const state = { patientListRequests: 0, globalLogoutRequests: 0, actionRequests: [] as string[] };
   const cors = {
     "access-control-allow-origin": "*",
     "access-control-allow-headers": "authorization, apikey, content-type, x-client-info",
-    "access-control-allow-methods": "GET, POST, PATCH, OPTIONS",
+    "access-control-allow-methods": "GET, POST, PATCH, DELETE, OPTIONS",
   };
   const user = {
     id: USER_ID,
@@ -69,6 +69,15 @@ async function installPatientMocks(page: Page, account: "patient" | "clinician" 
       return;
     }
     if (pathname === "/patients") state.patientListRequests += 1;
+    if (pathname.startsWith("/comments/") && ["POST", "DELETE"].includes(request.method())) {
+      state.actionRequests.push(`${request.method()} ${pathname}`);
+      await route.fulfill({
+        status: request.method() === "DELETE" ? 204 : 200,
+        headers: { ...cors, "content-type": "application/json" },
+        body: request.method() === "DELETE" ? undefined : JSON.stringify({ status: "recorded" }),
+      });
+      return;
+    }
     const body =
       pathname === "/me"
         ? account === "patient" ? {
@@ -92,6 +101,54 @@ async function installPatientMocks(page: Page, account: "patient" | "clinician" 
           }
         : pathname === "/patients"
           ? [{ id: PATIENT_ID, clinic_id: "10000000-0000-0000-0000-000000000001", synthetic_identifier: "SYN-A-001", display_name: "Parker Patient (Synthetic)", caller_role: "clinician" }]
+        : pathname === `/patients/${PATIENT_ID}`
+          ? { id: PATIENT_ID, clinic_id: "10000000-0000-0000-0000-000000000001", synthetic_identifier: "SYN-A-001", display_name: "Parker Patient (Synthetic)" }
+        : pathname === `/patients/${PATIENT_ID}/glance`
+          ? { patient_id: PATIENT_ID, items: [] }
+        : pathname === `/patients/${PATIENT_ID}/timeline`
+          ? [{
+              id: "70000000-0000-0000-0000-000000000001",
+              clinic_id: "10000000-0000-0000-0000-000000000001",
+              patient_id: PATIENT_ID,
+              author_id: USER_ID,
+              author_role: "clinician",
+              entry_type: "clinician_note",
+              visibility: "internal",
+              content: "Synthetic follow-up review.",
+              source_record_id: "60000000-0000-0000-0000-000000000001",
+              current_version: 1,
+              occurred_at: "2026-08-28T09:00:00+08:00",
+              source: null,
+            }]
+        : pathname === `/patients/${PATIENT_ID}/comments`
+          ? [{
+              id: "90000000-0000-0000-0000-000000000001",
+              clinic_id: "10000000-0000-0000-0000-000000000001",
+              patient_id: PATIENT_ID,
+              entry_id: "70000000-0000-0000-0000-000000000001",
+              section_id: null,
+              parent_comment_id: null,
+              author_id: USER_ID,
+              body: "Confirm the synthetic follow-up interval.",
+              body_format: "plain",
+              status: "open",
+              assigned_to: null,
+              source_version_id: null,
+              source_start_offset: null,
+              source_end_offset: null,
+              quoted_text: null,
+              created_at: "2026-08-28T09:10:00+08:00",
+              resolved_at: null,
+              reaction_counts: { acknowledged: 0, agree: 0, question: 0 },
+              my_reactions: [],
+            }]
+        : pathname === `/patients/${PATIENT_ID}/tasks`
+          || pathname === `/patients/${PATIENT_ID}/highlights`
+          || pathname === `/patients/${PATIENT_ID}/scribe-jobs`
+          || pathname === `/patients/${PATIENT_ID}/scribe-job-events`
+          || pathname === "/provider-usage"
+          || pathname === "/importance-preferences"
+          ? []
         : pathname === "/patient/dashboard"
           ? {
               patient_id: PATIENT_ID,
@@ -175,4 +232,32 @@ test("clinician login hydrates persisted recent-patient state without warnings",
   await expect(page.getByText("Recently viewed")).toBeVisible();
   expect(state.patientListRequests).toBeGreaterThanOrEqual(1);
   expect(hydrationErrors).toEqual([]);
+});
+
+test("clinician can toggle a comment reaction and delete their own comment", async ({ page }) => {
+  const state = await installPatientMocks(page, "clinician");
+  await page.goto("/sign-in");
+  await page.getByLabel("Email").fill("clinician.a@nightingale.local");
+  await page.locator('input[autocomplete="current-password"]').fill("SyntheticPassword123!");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.getByRole("link", { name: /Parker Patient/ }).click();
+
+  const comment = page.locator(".comment-card").filter({ hasText: "Confirm the synthetic" });
+  const acknowledge = comment.getByRole("button", { name: /Acknowledge/ });
+  await expect(acknowledge).toHaveAttribute("aria-pressed", "false");
+  await acknowledge.click();
+  await expect(acknowledge).toHaveAttribute("aria-pressed", "true");
+  await expect(acknowledge).toContainText("1");
+  await acknowledge.click();
+  await expect(acknowledge).toHaveAttribute("aria-pressed", "false");
+  await expect(acknowledge).toContainText("0");
+
+  await comment.getByRole("button", { name: "Delete comment" }).click();
+  await comment.getByRole("button", { name: "Confirm delete" }).click();
+  await expect(comment).toHaveCount(0);
+  expect(state.actionRequests).toEqual([
+    "POST /comments/90000000-0000-0000-0000-000000000001/reactions",
+    "DELETE /comments/90000000-0000-0000-0000-000000000001/reactions/acknowledged",
+    "DELETE /comments/90000000-0000-0000-0000-000000000001",
+  ]);
 });

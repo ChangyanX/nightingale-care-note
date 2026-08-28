@@ -216,6 +216,12 @@ class UpdateCareTaskRequest(BaseModel):
     patient_visible: bool | None = None
 
 
+class CommentReactionCounts(BaseModel):
+    acknowledged: int = Field(default=0, ge=0)
+    agree: int = Field(default=0, ge=0)
+    question: int = Field(default=0, ge=0)
+
+
 class CommentResponse(BaseModel):
     id: UUID
     clinic_id: UUID
@@ -234,6 +240,10 @@ class CommentResponse(BaseModel):
     quoted_text: str | None = None
     created_at: datetime
     resolved_at: datetime | None
+    reaction_counts: CommentReactionCounts = Field(default_factory=CommentReactionCounts)
+    my_reactions: list[Literal["acknowledged", "agree", "question"]] = Field(
+        default_factory=list
+    )
 
 
 class CreateCommentRequest(BaseModel):

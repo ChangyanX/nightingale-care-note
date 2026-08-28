@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/comments/{comment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Comment */
+        delete: operations["delete_comment_comments__comment_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/comments/{comment_id}/reactions": {
         parameters: {
             query?: never;
@@ -983,6 +1000,24 @@ export interface components {
              */
             updated_at: string;
         };
+        /** CommentReactionCounts */
+        CommentReactionCounts: {
+            /**
+             * Acknowledged
+             * @default 0
+             */
+            acknowledged: number;
+            /**
+             * Agree
+             * @default 0
+             */
+            agree: number;
+            /**
+             * Question
+             * @default 0
+             */
+            question: number;
+        };
         /** CommentReactionRequest */
         CommentReactionRequest: {
             /**
@@ -1025,6 +1060,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /** My Reactions */
+            my_reactions?: ("acknowledged" | "agree" | "question")[];
             /** Parent Comment Id */
             parent_comment_id: string | null;
             /**
@@ -1034,6 +1071,7 @@ export interface components {
             patient_id: string;
             /** Quoted Text */
             quoted_text?: string | null;
+            reaction_counts?: components["schemas"]["CommentReactionCounts"];
             /** Resolved At */
             resolved_at: string | null;
             /** Section Id */
@@ -1979,6 +2017,35 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    delete_comment_comments__comment_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                comment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     add_comment_reaction_comments__comment_id__reactions_post: {
         parameters: {
             query?: never;

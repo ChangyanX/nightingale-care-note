@@ -74,3 +74,21 @@ export async function apiPatch<T>(
   if (!response.ok) throw new ApiError(response.status, "The update could not be completed.");
   return (await response.json()) as T;
 }
+
+export async function apiDelete(path: string, accessToken: string): Promise<void> {
+  const { apiUrl } = getPublicEnvironment();
+  const response = await fetch(`${apiUrl}${path}`, {
+    method: "DELETE",
+    headers: { authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    let detail = "The delete could not be completed.";
+    try {
+      const responseBody = (await response.json()) as { detail?: unknown };
+      if (typeof responseBody.detail === "string") detail = responseBody.detail;
+    } catch {
+      // Keep the sanitized default; never expose an upstream response body.
+    }
+    throw new ApiError(response.status, detail);
+  }
+}

@@ -49,11 +49,46 @@ async def list_comments(
                 "source_end_offset,quoted_text,created_at,resolved_at"
             ),
             "patient_id": f"eq.{patient_id}",
+            "deleted_at": "is.null",
             "order": "created_at.asc,id.asc",
             "limit": str(limit),
         },
     )
-    return [CommentResponse.model_validate(row) for row in rows]
+    if not rows:
+        return []
+
+    reaction_rows = await gateway(settings).select(
+        "comment_reactions",
+        auth.access_token,
+        {
+            "select": "comment_id,profile_id,reaction",
+            "patient_id": f"eq.{patient_id}",
+            "comment_id": f"in.({','.join(str(row['id']) for row in rows)})",
+        },
+    )
+    counts: dict[str, dict[str, int]] = {
+        str(row["id"]): {"acknowledged": 0, "agree": 0, "question": 0} for row in rows
+    }
+    mine: dict[str, list[str]] = {str(row["id"]): [] for row in rows}
+    for reaction_row in reaction_rows:
+        comment_id = str(reaction_row["comment_id"])
+        reaction = str(reaction_row["reaction"])
+        if comment_id not in counts or reaction not in counts[comment_id]:
+            continue
+        counts[comment_id][reaction] += 1
+        if str(reaction_row["profile_id"]) == str(auth.user_id):
+            mine[comment_id].append(reaction)
+
+    return [
+        CommentResponse.model_validate(
+            {
+                **row,
+                "reaction_counts": counts[str(row["id"])],
+                "my_reactions": mine[str(row["id"])],
+            }
+        )
+        for row in rows
+    ]
 
 
 @router.post(
@@ -141,6 +176,19 @@ async def remove_comment_reaction(
         },
     )
     return {"status": "removed", "reaction": reaction}
+
+
+@router.delete("/comments/{comment_id}", status_code=204, tags=["collaboration"])
+async def delete_comment(
+    comment_id: UUID,
+    auth: AuthDependency,
+    settings: SettingsDependency,
+) -> None:
+    await gateway(settings).rpc(
+        "delete_own_comment",
+        auth.access_token,
+        {"p_comment_id": str(comment_id)},
+    )
 
 
 @router.get(

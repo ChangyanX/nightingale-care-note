@@ -157,6 +157,8 @@ export type Comment = {
   quoted_text: string | null;
   created_at: string;
   resolved_at: string | null;
+  reaction_counts: Record<"acknowledged" | "agree" | "question", number>;
+  my_reactions: ("acknowledged" | "agree" | "question")[];
 };
 
 export type ScribeJob = {

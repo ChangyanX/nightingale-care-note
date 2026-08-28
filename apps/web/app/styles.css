@@ -257,6 +257,14 @@ h2 { margin: 0; font-size: clamp(1.8rem, 3vw, 2.65rem); font-weight: 300; line-h
 .risk-attention { color: var(--amber); font-weight: 800; }
 .review-actions, .reaction-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
 .review-actions button, .reaction-actions button { padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--green); cursor: pointer; font-size: .7rem; }
+.reaction-actions button.selected { border-color: var(--green); background: var(--green-soft); box-shadow: inset 0 0 0 1px var(--green); }
+.reaction-actions button:disabled { cursor: wait; opacity: .65; }
+.reaction-actions button span { margin-left: 3px; font-variant-numeric: tabular-nums; }
+.comment-delete-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--muted); font-size: .7rem; }
+.comment-delete-actions button { min-height: 34px; }
+.danger-text { color: var(--nc-color-critical) !important; }
+.danger-button { padding: 7px 10px; border: 1px solid var(--nc-color-critical); border-radius: 10px; background: transparent; color: var(--nc-color-critical); cursor: pointer; }
+.collaboration-message { margin: 12px 0 0; }
 kbd { padding: 1px 4px; border: 1px solid var(--line); border-radius: 3px; background: var(--wash); }
 .comment-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
 .comment-form label:nth-of-type(3), .comment-form .checkbox-label, .comment-form .form-error, .comment-form button { grid-column: 1 / -1; }
