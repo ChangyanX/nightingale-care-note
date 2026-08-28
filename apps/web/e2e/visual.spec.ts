@@ -70,3 +70,24 @@ test("theme selection persists after reload", async ({ page }) => {
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", selected!);
 });
+
+test("client-owned preferences do not cause hydration warnings", async ({ page }) => {
+  const hydrationErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && message.text().toLowerCase().includes("hydration")) {
+      hydrationErrors.push(message.text());
+    }
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem("nightingale-theme", "dark");
+    localStorage.setItem(
+      "nightingale-recent-patients",
+      JSON.stringify(["40000000-0000-0000-0000-000000000001"]),
+    );
+  });
+
+  await page.goto("/patients");
+  await page.waitForURL(/\/sign-in$/);
+  await expect(page.locator("html")).toHaveAttribute("data-app-ready", "true");
+  expect(hydrationErrors).toEqual([]);
+});

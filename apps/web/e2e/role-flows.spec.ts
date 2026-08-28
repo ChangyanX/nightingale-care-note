@@ -11,7 +11,7 @@ function testAccessToken() {
   return `${header}.${payload}.synthetic-test-signature`;
 }
 
-async function installPatientMocks(page: Page) {
+async function installPatientMocks(page: Page, account: "patient" | "clinician" = "patient") {
   const state = { patientListRequests: 0, globalLogoutRequests: 0 };
   const cors = {
     "access-control-allow-origin": "*",
@@ -22,10 +22,10 @@ async function installPatientMocks(page: Page) {
     id: USER_ID,
     aud: "authenticated",
     role: "authenticated",
-    email: "patient.a@nightingale.local",
+    email: account === "patient" ? "patient.a@nightingale.local" : "clinician.a@nightingale.local",
     email_confirmed_at: "2026-08-20T00:00:00Z",
     app_metadata: { provider: "email", providers: ["email"] },
-    user_metadata: { display_name: "Parker Patient" },
+    user_metadata: { display_name: account === "patient" ? "Parker Patient" : "Dr. Casey Clinician" },
     created_at: "2026-08-20T00:00:00Z",
   };
   const token = testAccessToken();
@@ -71,7 +71,7 @@ async function installPatientMocks(page: Page) {
     if (pathname === "/patients") state.patientListRequests += 1;
     const body =
       pathname === "/me"
-        ? {
+        ? account === "patient" ? {
             id: USER_ID,
             email: user.email,
             display_name: "Parker Patient",
@@ -80,7 +80,18 @@ async function installPatientMocks(page: Page) {
             linked_patient_id: PATIENT_ID,
             account_kind: "patient",
             landing_path: "/patient",
+          } : {
+            id: USER_ID,
+            email: user.email,
+            display_name: "Dr. Casey Clinician",
+            preferred_name: "Casey",
+            memberships: [{ clinic_id: "10000000-0000-0000-0000-000000000001", role: "clinician" }],
+            linked_patient_id: null,
+            account_kind: "clinic_user",
+            landing_path: "/patients",
           }
+        : pathname === "/patients"
+          ? [{ id: PATIENT_ID, clinic_id: "10000000-0000-0000-0000-000000000001", synthetic_identifier: "SYN-A-001", display_name: "Parker Patient (Synthetic)", caller_role: "clinician" }]
         : pathname === "/patient/dashboard"
           ? {
               patient_id: PATIENT_ID,
@@ -99,7 +110,7 @@ async function installPatientMocks(page: Page) {
             ? []
             : [];
     await route.fulfill({
-      status: pathname === "/patients" ? 403 : 200,
+      status: pathname === "/patients" && account === "patient" ? 403 : 200,
       headers: { ...cors, "content-type": "application/json" },
       body: JSON.stringify(body),
     });
@@ -139,4 +150,29 @@ test("global logout clears the authenticated browser session and returns to sign
 
   await expect(page).toHaveURL(/\/sign-in$/);
   expect(state.globalLogoutRequests).toBe(1);
+});
+
+test("clinician login hydrates persisted recent-patient state without warnings", async ({ page }) => {
+  const hydrationErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && message.text().toLowerCase().includes("hydration")) {
+      hydrationErrors.push(message.text());
+    }
+  });
+  await page.addInitScript((patientId) => {
+    localStorage.setItem("nightingale-theme", "dark");
+    localStorage.setItem("nightingale-recent-patients", JSON.stringify([patientId]));
+  }, PATIENT_ID);
+  const state = await installPatientMocks(page, "clinician");
+
+  await page.goto("/sign-in");
+  await page.getByLabel("Email").fill("clinician.a@nightingale.local");
+  await page.locator('input[autocomplete="current-password"]').fill("SyntheticPassword123!");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+
+  await expect(page).toHaveURL(/\/patients$/);
+  await expect(page.getByRole("heading", { name: "Select a patient" })).toBeVisible();
+  await expect(page.getByText("Recently viewed")).toBeVisible();
+  expect(state.patientListRequests).toBeGreaterThanOrEqual(1);
+  expect(hydrationErrors).toEqual([]);
 });

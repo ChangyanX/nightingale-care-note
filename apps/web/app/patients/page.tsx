@@ -15,11 +15,21 @@ export default function PatientsPage() {
   const [patients, setPatients] = useState<Patient[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [recentIds, setRecentIds] = useState<string[]>(() => {
-    if (typeof window === "undefined") return [];
-    try { return JSON.parse(localStorage.getItem("nightingale-recent-patients") ?? "[]") as string[]; }
-    catch { return []; }
-  });
+  const [recentIds, setRecentIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    try {
+      const stored = JSON.parse(localStorage.getItem("nightingale-recent-patients") ?? "[]") as unknown;
+      if (Array.isArray(stored)) {
+        const next = stored.filter((item): item is string => typeof item === "string").slice(0, 5);
+        queueMicrotask(() => { if (active) setRecentIds(next); });
+      }
+    } catch {
+      localStorage.removeItem("nightingale-recent-patients");
+    }
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     let active = true;
