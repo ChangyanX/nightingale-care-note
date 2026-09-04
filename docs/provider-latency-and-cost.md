@@ -26,6 +26,19 @@ estimated cost—not prompts or clinical text. `GET /provider-usage` aggregates:
 - average claim-to-completion latency;
 - estimated USD cost.
 
-Until a genuine synthetic call is run with a newly rotated key or a local
-Ollama model, the dashboard correctly returns no live measurement rather than
-presenting mocked latency as provider evidence.
+On August 28, 2026, `make smoke-llm` completed one genuine, non-persisted,
+synthetic doctor-consult call using Groq `openai/gpt-oss-20b`. The validated
+response used schema version `1.0`, consumed 1,306 input tokens and 1,162 output
+tokens, and contained three facts, one action, and two highlights after verified
+name redaction. The command did not print or persist the source or generated
+clinical text.
+
+Later on August 28, one genuine local durable doctor-consult job completed the
+full claim, source-load, redaction, Groq, validation, and atomic persistence
+path. It consumed 1,262 input tokens and 1,513 output tokens, completed in
+2,384 ms claim-to-commit, linked exactly one output entry and version, and
+created two exact-span suggested highlights. No source or generated clinical
+text was printed or added to this evidence file.
+
+`GET /provider-usage` counts this persisted job but correctly excludes the
+earlier non-persisted smoke request.

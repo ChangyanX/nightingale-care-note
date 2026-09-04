@@ -462,10 +462,20 @@ async def create_entry(
     settings: SettingsDependency,
 ) -> TimelineEntryResponse:
     normalized_content = unicodedata.normalize("NFC", request.content.strip())
+    expected_visibility = (
+        "patient_facing"
+        if request.entry_type in {"patient_summary", "patient_instruction"}
+        else "internal"
+    )
+    if request.visibility != expected_visibility:
+        raise HTTPException(
+            status_code=422,
+            detail=f"{request.entry_type} must use {expected_visibility} visibility",
+        )
     payload: dict[str, Any] = {
         "p_patient_id": str(request.patient_id),
         "p_entry_type": request.entry_type,
-        "p_visibility": request.visibility,
+        "p_visibility": expected_visibility,
         "p_content": normalized_content,
     }
     if request.occurred_at is not None:

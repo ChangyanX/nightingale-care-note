@@ -6,7 +6,9 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AppHeader } from "@/components/app-header";
 import { CollaborationPanel } from "@/components/collaboration-panel";
+import { EntryComposer } from "@/components/entry-composer";
 import { HighlightReviewPanel } from "@/components/highlight-review-panel";
+import { LiveScribeGenerator } from "@/components/live-scribe-generator";
 import { RevisionViewer } from "@/components/revision-viewer";
 import { ScribeJobStatus } from "@/components/scribe-job-status";
 import { ApiError, apiGet, apiPatch, apiPost } from "@/lib/api/client";
@@ -91,12 +93,32 @@ export default function PatientPage() {
       window.setTimeout(() => setActivityToast(null), 4000);
     };
     const channel = supabase.channel(`patient-${patientId}`);
-    for (const table of ["entries", "care_tasks", "comments", "comment_reactions", "highlights", "ai_jobs"] as const) {
+    for (const table of ["entries", "care_tasks", "comments", "comment_reactions", "highlights", "ai_jobs", "ai_job_events"] as const) {
       channel.on("postgres_changes", { event: "*", schema: "public", table, filter: `patient_id=eq.${patientId}` }, () => refresh(readable(table)));
     }
     channel.subscribe((status) => setLiveStatus(status === "SUBSCRIBED" ? "connected" : status === "CHANNEL_ERROR" || status === "TIMED_OUT" ? "disconnected" : "connecting"));
     return () => { void supabase.removeChannel(channel); };
   }, [data?.accessToken, patientId]);
+
+  const hasActiveJobs = data?.jobs.some((job) => job.status === "queued" || job.status === "processing") ?? false;
+
+  useEffect(() => {
+    if (!data?.accessToken || !hasActiveJobs) return;
+    let active = true;
+    const refreshProgress = async () => {
+      try {
+        const [jobs, jobEvents] = await Promise.all([
+          apiGet<ScribeJob[]>(`/patients/${patientId}/scribe-jobs`, data.accessToken),
+          apiGet<ScribeJobEvent[]>(`/patients/${patientId}/scribe-job-events`, data.accessToken),
+        ]);
+        if (active) setData((current) => current ? { ...current, jobs, jobEvents } : current);
+      } catch {
+        if (active) setActivityToast("Generation status could not be refreshed; Realtime remains active.");
+      }
+    };
+    const timer = window.setInterval(() => { void refreshProgress(); }, 2000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [data?.accessToken, hasActiveJobs, patientId]);
 
   const filteredTimeline = useMemo(() => (data?.timeline ?? []).filter((entry) => {
     if (roleFilter && entry.author_role !== roleFilter) return false;
@@ -172,6 +194,16 @@ export default function PatientPage() {
           ))}</div> : <div className="empty-state"><h3>No Glance items yet</h3><p>The timeline is available, but no bounded priority items were selected.</p></div>}
         </section>
 
+        <LiveScribeGenerator
+          accessToken={data.accessToken}
+          patientId={data.patient.id}
+          role={primaryRole ?? "admin"}
+          onQueued={(job) => {
+            setData((current) => current ? { ...current, jobs: [job, ...current.jobs.filter((item) => item.id !== job.id)] } : current);
+            setActivityToast("AI generation queued. Live status will update as the worker progresses.");
+          }}
+        />
+
         <ScribeJobStatus jobs={data.jobs} events={data.jobEvents} usage={data.providerUsage} />
 
         <HighlightReviewPanel accessToken={data.accessToken} highlights={data.highlights} canReview={canReview} onReviewed={(ids, status) => setData({ ...data, highlights: data.highlights.map((item) => ids.includes(item.id) ? { ...item, status } : item) })} />
@@ -179,6 +211,18 @@ export default function PatientPage() {
         <div className="patient-columns">
           <section className="timeline-section" aria-labelledby="timeline-title">
             <div className="section-heading"><div><p className="eyebrow">Across visits and voices</p><h2 id="timeline-title">Timeline</h2></div><span>{filteredTimeline.length} entries</span></div>
+            <EntryComposer
+              accessToken={data.accessToken}
+              patientId={data.patient.id}
+              role={primaryRole ?? "admin"}
+              onCreated={(entry) => {
+                setData((current) => current ? {
+                  ...current,
+                  timeline: [entry, ...current.timeline].sort((left, right) => right.occurred_at.localeCompare(left.occurred_at) || right.id.localeCompare(left.id)),
+                } : current);
+                setActivityToast("Timeline update saved. Authorized collaborators will receive it live.");
+              }}
+            />
             <div className="timeline-filters" aria-label="Timeline filters">
               <label>Role<select value={roleFilter} onChange={(event) => updateFilter("role", event.target.value)}><option value="">All roles</option><option value="patient">Patient</option><option value="staff">Staff</option><option value="clinician">Clinician</option><option value="system">AI</option></select></label>
               <label>Type<select value={typeFilter} onChange={(event) => updateFilter("type", event.target.value)}><option value="">All types</option>{Array.from(new Set(data.timeline.map((entry) => entry.entry_type))).map((type) => <option value={type} key={type}>{readable(type)}</option>)}</select></label>

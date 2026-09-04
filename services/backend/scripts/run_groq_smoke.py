@@ -4,7 +4,7 @@ import json
 
 from app.domain.redaction import redact_for_llm
 from app.domain.scribe import ScribeInteractionType
-from app.infrastructure.llm import GroqScribeProvider
+from app.infrastructure.llm import GroqScribeProvider, ProviderError
 from app.worker.config import get_worker_settings
 
 _SYNTHETIC_TRANSCRIPT = """Patient Name: Parker Patient
@@ -49,10 +49,25 @@ async def run(interaction_type: ScribeInteractionType) -> None:
         model=settings.llm_model,
         base_url=str(settings.llm_base_url),
     )
-    result = await provider.generate(
-        redaction,
-        interaction_type=interaction_type,
-    )
+    try:
+        result = await provider.generate(
+            redaction,
+            interaction_type=interaction_type,
+        )
+    except ProviderError as error:
+        print(
+            json.dumps(
+                {
+                    "status": "failed",
+                    "provider": "groq",
+                    "model": settings.llm_model,
+                    "safe_error_code": error.code,
+                    "retryable": error.retryable,
+                },
+                indent=2,
+            )
+        )
+        raise SystemExit(1) from None
     print(
         json.dumps(
             {

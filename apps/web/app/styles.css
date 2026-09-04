@@ -145,6 +145,19 @@ h2 { margin: 0; font-size: clamp(1.8rem, 3vw, 2.65rem); font-weight: 300; line-h
 .entry-meta .role-label { color: var(--green); background: var(--green-soft); font-weight: 800; }
 .role-system .entry-meta .role-label { color: var(--purple); background: color-mix(in srgb, var(--purple) 12%, transparent); }
 .entry-body > p { margin: 15px 0; line-height: 1.55; }
+.entry-composer { margin: 16px 0; }
+.entry-composer > .primary-button { width: fit-content; }
+.entry-composer form { padding: 20px; border: 1px solid var(--line); border-radius: 20px; background: var(--paper-soft); }
+.entry-composer-heading, .entry-composer-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.entry-composer-heading h3 { margin: 3px 0 0; font-size: 1.05rem; }
+.entry-composer-fields { display: grid; grid-template-columns: 1.25fr .75fr; gap: 12px; margin-top: 16px; }
+.entry-composer-fields label { display: grid; gap: 6px; color: var(--muted); font-size: .72rem; font-weight: 600; }
+.entry-composer-fields input, .entry-composer-fields select, .entry-composer-fields textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); color: var(--ink); font: inherit; }
+.entry-composer-content { grid-column: 1 / -1; }
+.entry-composer-content textarea { min-height: 130px; resize: vertical; line-height: 1.5; }
+.entry-composer-footer { margin-top: 14px; }
+.entry-composer-footer p { margin: 0; color: var(--muted); font-size: .74rem; }
+.entry-composer-footer .form-error { width: 100%; }
 .timeline-entry footer { padding-top: 12px; border-top: 1px solid var(--line); }
 .revision-viewer { margin-top: 10px; }
 .revision-toggle { padding: 0; border: 0; background: transparent; color: var(--green); cursor: pointer; font-size: .74rem; font-weight: 600; }
@@ -229,16 +242,34 @@ h2 { margin: 0; font-size: clamp(1.8rem, 3vw, 2.65rem); font-weight: 300; line-h
 .empty-state.small { padding: 14px; font-size: .82rem; }
 .review-panel, .collaboration-panel { margin: 38px 0; padding: 26px; border: 1px solid var(--line); border-radius: 24px; background: var(--paper); box-shadow: var(--card-shadow); }
 .scribe-status { margin: 26px 0; padding: 22px; border: 1px solid var(--line); border-radius: 22px; background: var(--paper); }
+.live-scribe-panel { display: grid; gap: 14px; margin: 26px 0; padding: 22px; border: 1px solid color-mix(in srgb, var(--green) 35%, var(--line)); border-radius: 22px; background: linear-gradient(135deg, var(--paper), var(--green-soft)); }
+.live-scribe-panel.read-only { border-color: var(--line); background: var(--paper-soft); }
+.live-scribe-panel > p { max-width: 780px; color: var(--muted); }
+.live-scribe-heading, .live-scribe-actions, .generation-boundary { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.live-scribe-heading h2 { font-size: 1.35rem; }
+.live-scribe-form { display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+.live-scribe-form label { color: var(--ink); font-size: .9rem; font-weight: 650; }
+.live-scribe-form textarea { width: 100%; padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); color: var(--ink); font: inherit; line-height: 1.55; resize: vertical; }
+.generation-boundary { justify-content: flex-start; color: var(--muted); font-size: .8rem; }
+.generation-boundary strong { padding: 5px 9px; border-radius: 999px; background: var(--green); color: var(--green-ink); }
 .scribe-status h2 { font-size: 1.25rem; }
 .scribe-job-list { display: grid; gap: 8px; margin-top: 12px; }
 .scribe-job { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 12px; border-radius: 14px; background: var(--paper-soft); }
 .scribe-job > div { display: grid; text-transform: capitalize; }
 .scribe-job small { color: var(--muted); }
+.scribe-monitor { display: block; margin-top: 4px; color: var(--muted); }
+.scribe-job .scribe-error { color: var(--nc-color-critical); font-weight: 650; text-transform: none; }
 .scribe-stages { display: flex; flex-wrap: wrap; gap: 5px; margin: 5px 0 0; padding: 0; list-style: none; }
 .scribe-stages li { padding: 3px 7px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--muted); font-size: .66rem; }
 .scribe-progress { width: 10px; height: 10px; border-radius: 50%; background: var(--green); }
 .status-queued .scribe-progress, .status-processing .scribe-progress { animation: pulse .8s infinite alternate; box-shadow: 0 0 0 5px var(--green-soft); }
 .status-failed .scribe-progress, .status-dead_letter .scribe-progress { background: var(--nc-color-critical); }
+.patient-generation-list { display: grid; gap: 8px; margin-top: 14px; }
+.patient-generation-list > div { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); }
+.patient-generation-list span:last-child { display: grid; text-transform: capitalize; }
+.patient-generation-list small { color: var(--muted); text-transform: none; }
+.patient-generation-list .scribe-progress.status-queued, .patient-generation-list .scribe-progress.status-processing { animation: pulse .8s infinite alternate; box-shadow: 0 0 0 5px var(--green-soft); }
+.patient-generation-list .scribe-progress.status-failed, .patient-generation-list .scribe-progress.status-dead_letter { background: var(--nc-color-critical); }
 .provider-usage { margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--line); }
 .provider-usage h3 { margin: 0 0 8px; font-size: .9rem; }
 .usage-table { display: grid; gap: 6px; }
@@ -353,6 +384,8 @@ select, input[type="range"], input[type="checkbox"] { accent-color: var(--green)
   .glance-section { padding: 18px; }
   .revision-layout { grid-template-columns: 1fr; }
   .timeline-filters, .comment-form { grid-template-columns: 1fr; }
+  .entry-composer-fields { grid-template-columns: 1fr; }
+  .entry-composer-content { grid-column: auto; }
   .comment-form > * { grid-column: 1 !important; }
   .review-list, .comment-list { grid-template-columns: 1fr; }
   .usage-row { grid-template-columns: 1fr 1fr; }

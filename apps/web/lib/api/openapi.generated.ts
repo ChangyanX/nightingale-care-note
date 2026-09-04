@@ -396,6 +396,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/patient/ai-jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Own Ai Jobs
+         * @description Return status-only records without restricted source or output identifiers.
+         */
+        get: operations["list_own_ai_jobs_patient_ai_jobs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/patient/ai-question": {
         parameters: {
             query?: never;
@@ -630,6 +650,26 @@ export interface paths {
         put?: never;
         /** Create Scribe Job */
         post: operations["create_scribe_job_patients__patient_id__scribe_jobs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/patients/{patient_id}/scribe-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Live Scribe Session
+         * @description Create the role-owned source entry and its durable AI job atomically.
+         */
+        post: operations["create_live_scribe_session_patients__patient_id__scribe_sessions_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1161,6 +1201,18 @@ export interface components {
              */
             visibility: "internal" | "patient_facing";
         };
+        /** CreateLiveScribeSessionRequest */
+        CreateLiveScribeSessionRequest: {
+            /** Idempotency Key */
+            idempotency_key: string;
+            /**
+             * Interaction Type
+             * @enum {string}
+             */
+            interaction_type: "doctor_consult" | "nurse_consult";
+            /** Transcript */
+            transcript: string;
+        };
         /** CreateScribeJobRequest */
         CreateScribeJobRequest: {
             /** Idempotency Key */
@@ -1510,8 +1562,17 @@ export interface components {
         };
         /** PatientAiQuestionRequest */
         PatientAiQuestionRequest: {
+            /** Idempotency Key */
+            idempotency_key?: string | null;
             /** Question */
             question: string;
+        };
+        /** PatientAiSessionResponse */
+        PatientAiSessionResponse: {
+            entry: components["schemas"]["PatientSafeEntryResponse"];
+            job: components["schemas"]["PatientScribeJobResponse"];
+            /** Message */
+            message: string;
         };
         /** PatientDashboardResponse */
         PatientDashboardResponse: {
@@ -1627,6 +1688,33 @@ export interface components {
              * Format: date-time
              */
             occurred_at: string;
+        };
+        /** PatientScribeJobResponse */
+        PatientScribeJobResponse: {
+            /** Completed At */
+            completed_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Safe Error Code */
+            safe_error_code: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "processing" | "succeeded" | "failed" | "dead_letter" | "cancelled";
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
         };
         /** PatientSummaryReviewRequest */
         PatientSummaryReviewRequest: {
@@ -2749,6 +2837,26 @@ export interface operations {
             };
         };
     };
+    list_own_ai_jobs_patient_ai_jobs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientScribeJobResponse"][];
+                };
+            };
+        };
+    };
     record_ai_question_patient_ai_question_post: {
         parameters: {
             query?: never;
@@ -2768,7 +2876,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PatientPortalEntryResponse"];
+                    "application/json": components["schemas"]["PatientAiSessionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -3231,6 +3339,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["CreateScribeJobRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScribeJobResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_live_scribe_session_patients__patient_id__scribe_sessions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patient_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateLiveScribeSessionRequest"];
             };
         };
         responses: {

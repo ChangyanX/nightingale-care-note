@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 from typing import Any
 
 import httpx
@@ -15,6 +16,30 @@ Every fact, action, and highlight quote must be copied exactly from the redacted
 Use occurrence_hint as the zero-based occurrence number when a quote repeats.
 Use -1 when no occurrence hint is needed. Suggestions are unreviewed: never claim
 that a clinician accepted or confirmed them."""
+
+
+def _strict_response_schema() -> dict[str, Any]:
+    """Return Groq strict-mode JSON Schema without weakening runtime validation."""
+
+    schema = deepcopy(ScribeOutput.model_json_schema())
+
+    def normalize(node: object) -> None:
+        if isinstance(node, dict):
+            properties = node.get("properties")
+            if node.get("type") == "object" and isinstance(properties, dict):
+                node["required"] = list(properties)
+                node["additionalProperties"] = False
+            # Pydantic emits defaults for nullable fields. Strict mode represents
+            # optional values as required nullable properties and rejects defaults.
+            node.pop("default", None)
+            for value in node.values():
+                normalize(value)
+        elif isinstance(node, list):
+            for value in node:
+                normalize(value)
+
+    normalize(schema)
+    return schema
 
 
 class GroqScribeProvider:
@@ -60,7 +85,7 @@ class GroqScribeProvider:
                 "json_schema": {
                     "name": "nightingale_scribe_output",
                     "strict": True,
-                    "schema": ScribeOutput.model_json_schema(),
+                    "schema": _strict_response_schema(),
                 },
             },
         }

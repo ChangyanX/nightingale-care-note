@@ -11,8 +11,20 @@ function testAccessToken() {
   return `${header}.${payload}.synthetic-test-signature`;
 }
 
-async function installPatientMocks(page: Page, account: "patient" | "clinician" = "patient") {
-  const state = { patientListRequests: 0, globalLogoutRequests: 0, actionRequests: [] as string[] };
+async function installPatientMocks(
+  page: Page,
+  account: "patient" | "clinician" | "staff" = "patient",
+  options: { scribeFailure?: { status: number; detail: string } } = {},
+) {
+  const state = {
+    patientListRequests: 0,
+    globalLogoutRequests: 0,
+    actionRequests: [] as string[],
+    entryRequests: [] as Record<string, unknown>[],
+    scribeRequests: [] as Record<string, unknown>[],
+    patientAiQuestions: [] as Record<string, unknown>[],
+    patientAiJobs: [] as Record<string, unknown>[],
+  };
   const cors = {
     "access-control-allow-origin": "*",
     "access-control-allow-headers": "authorization, apikey, content-type, x-client-info",
@@ -22,10 +34,10 @@ async function installPatientMocks(page: Page, account: "patient" | "clinician" 
     id: USER_ID,
     aud: "authenticated",
     role: "authenticated",
-    email: account === "patient" ? "patient.a@nightingale.local" : "clinician.a@nightingale.local",
+    email: account === "patient" ? "patient.a@nightingale.local" : `${account}.a@nightingale.local`,
     email_confirmed_at: "2026-08-20T00:00:00Z",
     app_metadata: { provider: "email", providers: ["email"] },
-    user_metadata: { display_name: account === "patient" ? "Parker Patient" : "Dr. Casey Clinician" },
+    user_metadata: { display_name: account === "patient" ? "Parker Patient" : account === "staff" ? "Sam Staff" : "Dr. Casey Clinician" },
     created_at: "2026-08-20T00:00:00Z",
   };
   const token = testAccessToken();
@@ -69,6 +81,91 @@ async function installPatientMocks(page: Page, account: "patient" | "clinician" 
       return;
     }
     if (pathname === "/patients") state.patientListRequests += 1;
+    if (pathname === "/entries" && request.method() === "POST") {
+      const entryRequest = request.postDataJSON() as Record<string, unknown>;
+      state.entryRequests.push(entryRequest);
+      await route.fulfill({
+        status: 201,
+        headers: { ...cors, "content-type": "application/json" },
+        body: JSON.stringify({
+          id: state.entryRequests.length === 1
+            ? "70000000-0000-0000-0000-000000000099"
+            : "70000000-0000-0000-0000-000000000098",
+          clinic_id: "10000000-0000-0000-0000-000000000001",
+          patient_id: PATIENT_ID,
+          author_id: USER_ID,
+          author_role: "clinician",
+          entry_type: entryRequest.entry_type,
+          visibility: entryRequest.visibility,
+          content: entryRequest.content,
+          source_record_id: state.entryRequests.length === 1
+            ? "60000000-0000-0000-0000-000000000099"
+            : "60000000-0000-0000-0000-000000000098",
+          current_version: 1,
+          occurred_at: entryRequest.occurred_at,
+          source: null,
+        }),
+      });
+      return;
+    }
+    if (pathname === `/patients/${PATIENT_ID}/scribe-sessions` && request.method() === "POST") {
+      const scribeRequest = request.postDataJSON() as Record<string, unknown>;
+      state.scribeRequests.push(scribeRequest);
+      if (options.scribeFailure) {
+        await route.fulfill({
+          status: options.scribeFailure.status,
+          headers: { ...cors, "content-type": "application/json" },
+          body: JSON.stringify({ detail: options.scribeFailure.detail }),
+        });
+        return;
+      }
+      await route.fulfill({
+        status: 202,
+        headers: { ...cors, "content-type": "application/json" },
+        body: JSON.stringify({
+          id: "d0000000-0000-0000-0000-000000000099",
+          patient_id: PATIENT_ID,
+          interaction_type: scribeRequest.interaction_type,
+          status: "queued",
+          attempt_count: 0,
+          queue_position: 1,
+          output_entry_id: null,
+          provider_name: null,
+          model_name: null,
+          created_at: "2026-08-28T12:00:00+08:00",
+          updated_at: "2026-08-28T12:00:00+08:00",
+        }),
+      });
+      return;
+    }
+    if (pathname === "/patient/ai-question" && request.method() === "POST") {
+      const questionRequest = request.postDataJSON() as Record<string, unknown>;
+      state.patientAiQuestions.push(questionRequest);
+      const job = {
+        id: "d0000000-0000-0000-0000-000000000098",
+        status: "queued",
+        created_at: "2026-08-28T12:00:00+08:00",
+        updated_at: "2026-08-28T12:00:00+08:00",
+        completed_at: null,
+        safe_error_code: null,
+      };
+      state.patientAiJobs = [job];
+      await route.fulfill({
+        status: 201,
+        headers: { ...cors, "content-type": "application/json" },
+        body: JSON.stringify({
+          entry: {
+            id: "71000000-0000-0000-0000-000000000099",
+            entry_type: "patient_insight",
+            content: `Patient question for care team: ${questionRequest.question}`,
+            occurred_at: "2026-08-28T12:00:00+08:00",
+          },
+          job,
+          message: "Your question was recorded and AI generation was queued for your care team.",
+        }),
+      });
+      return;
+    }
     if (pathname.startsWith("/comments/") && ["POST", "DELETE"].includes(request.method())) {
       state.actionRequests.push(`${request.method()} ${pathname}`);
       await route.fulfill({
@@ -92,9 +189,9 @@ async function installPatientMocks(page: Page, account: "patient" | "clinician" 
           } : {
             id: USER_ID,
             email: user.email,
-            display_name: "Dr. Casey Clinician",
-            preferred_name: "Casey",
-            memberships: [{ clinic_id: "10000000-0000-0000-0000-000000000001", role: "clinician" }],
+            display_name: account === "staff" ? "Sam Staff" : "Dr. Casey Clinician",
+            preferred_name: account === "staff" ? "Sam" : "Casey",
+            memberships: [{ clinic_id: "10000000-0000-0000-0000-000000000001", role: account }],
             linked_patient_id: null,
             account_kind: "clinic_user",
             landing_path: "/patients",
@@ -111,7 +208,7 @@ async function installPatientMocks(page: Page, account: "patient" | "clinician" 
               clinic_id: "10000000-0000-0000-0000-000000000001",
               patient_id: PATIENT_ID,
               author_id: USER_ID,
-              author_role: "clinician",
+          author_role: account,
               entry_type: "clinician_note",
               visibility: "internal",
               content: "Synthetic follow-up review.",
@@ -163,6 +260,8 @@ async function installPatientMocks(page: Page, account: "patient" | "clinician" 
               observations: [{ observation_type: "peak_flow", value: 410, unit: "L/min", observed_at: "2026-08-28T07:00:00+08:00" }, { observation_type: "sleep_hours", value: 7, unit: "hours", observed_at: "2026-08-28T07:00:00+08:00" }],
               visible_tasks: [{ id: "74000000-0000-0000-0000-000000000001", title: "Complete the seven-day diary", status: "open", due_at: "2026-09-03T17:00:00+08:00", patient_acknowledged_at: null }],
             }
+          : pathname === "/patient/ai-jobs"
+            ? state.patientAiJobs
           : pathname === "/notifications"
             ? []
             : [];
@@ -195,6 +294,20 @@ test("patient login lands on the own-account dashboard without requesting the pa
     animations: "disabled",
     fullPage: true,
   });
+});
+
+test("patient can trigger a status-only AI timeline generation", async ({ page }) => {
+  const state = await installPatientMocks(page);
+  await signInAsPatient(page);
+
+  await page.getByRole("textbox", { name: "Your question" }).fill("Could my synthetic evening cough be related to the inhaler timing?");
+  await page.getByRole("button", { name: "Generate care-team summary" }).click();
+
+  await expect(page.getByText("Your question was recorded and AI generation was queued for your care team.")).toBeVisible();
+  await expect(page.getByLabel("AI generation status").getByText("queued", { exact: true })).toBeVisible();
+  await expect(page.getByText("Processing securely")).toBeVisible();
+  expect(state.patientAiQuestions).toHaveLength(1);
+  expect(state.patientAiQuestions[0].question).toBe("Could my synthetic evening cough be related to the inhaler timing?");
 });
 
 test("global logout clears the authenticated browser session and returns to sign-in", async ({
@@ -260,4 +373,106 @@ test("clinician can toggle a comment reaction and delete their own comment", asy
     "DELETE /comments/90000000-0000-0000-0000-000000000001/reactions/acknowledged",
     "DELETE /comments/90000000-0000-0000-0000-000000000001",
   ]);
+});
+
+test("clinician can add internal and patient-facing timeline updates", async ({ page }) => {
+  const state = await installPatientMocks(page, "clinician");
+  await page.goto("/sign-in");
+  await page.getByLabel("Email").fill("clinician.a@nightingale.local");
+  await page.locator('input[autocomplete="current-password"]').fill("SyntheticPassword123!");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.getByRole("link", { name: /Parker Patient/ }).click();
+
+  await page.getByRole("button", { name: "Add update" }).click();
+  await expect(page.getByLabel("Update type")).toHaveValue("clinician_note");
+  await expect(page.getByText("Internal care-team content. Patients cannot access it.")).toBeVisible();
+  await page.getByRole("textbox", { name: "Note", exact: true }).fill("Synthetic clinician follow-up added from the Care Note.");
+  await page.getByRole("button", { name: "Save update" }).click();
+
+  await expect(page.getByText("Synthetic clinician follow-up added from the Care Note.")).toBeVisible();
+  await page.getByRole("button", { name: "Add update" }).click();
+  await page.getByLabel("Update type").selectOption("patient_summary");
+  await expect(page.getByText("This will be released to the patient.")).toBeVisible();
+  await page.getByRole("textbox", { name: "Note", exact: true }).fill("Synthetic patient-safe breathing summary.");
+  await page.getByRole("button", { name: "Save update" }).click();
+
+  await expect(page.getByText("Synthetic patient-safe breathing summary.")).toBeVisible();
+  expect(state.entryRequests).toHaveLength(2);
+  expect(state.entryRequests[0]).toMatchObject({
+    patient_id: PATIENT_ID,
+    entry_type: "clinician_note",
+    visibility: "internal",
+    content: "Synthetic clinician follow-up added from the Care Note.",
+  });
+  expect(state.entryRequests[1]).toMatchObject({
+    patient_id: PATIENT_ID,
+    entry_type: "patient_summary",
+    visibility: "patient_facing",
+    content: "Synthetic patient-safe breathing summary.",
+  });
+});
+
+test("clinician can queue the complete live AI timeline flow", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window.crypto, "randomUUID", { value: undefined, configurable: true });
+  });
+  const state = await installPatientMocks(page, "clinician");
+  await page.goto("/sign-in");
+  await page.getByLabel("Email").fill("clinician.a@nightingale.local");
+  await page.locator('input[autocomplete="current-password"]').fill("SyntheticPassword123!");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.getByRole("link", { name: /Parker Patient/ }).click();
+
+  await page.getByRole("button", { name: "Generate AI summary" }).click();
+  await page.getByRole("button", { name: "Use synthetic example" }).click();
+  await page.getByRole("button", { name: "Save source and generate" }).click();
+
+  await expect(page.getByText("Generation queued. The timeline will update automatically when validation finishes.")).toBeVisible();
+  expect(state.scribeRequests).toHaveLength(1);
+  expect(state.scribeRequests[0].interaction_type).toBe("doctor_consult");
+  expect(String(state.scribeRequests[0].transcript)).toContain("Synthetic consult");
+  expect(String(state.scribeRequests[0].idempotency_key)).toMatch(/^live-doctor_consult-[a-f0-9]{32}$/);
+});
+
+test("clinician sees the sanitized queue rejection instead of worker advice", async ({ page }) => {
+  const state = await installPatientMocks(page, "clinician", {
+    scribeFailure: { status: 403, detail: "Role cannot create this session" },
+  });
+  await page.goto("/sign-in");
+  await page.getByLabel("Email").fill("clinician.a@nightingale.local");
+  await page.locator('input[autocomplete="current-password"]').fill("SyntheticPassword123!");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.getByRole("link", { name: /Parker Patient/ }).click();
+
+  await page.getByRole("button", { name: "Generate AI summary" }).click();
+  await page.getByRole("button", { name: "Use synthetic example" }).click();
+  await page.getByRole("button", { name: "Save source and generate" }).click();
+
+  await expect(page.locator(".live-scribe-panel .form-error")).toHaveText(
+    "Generation was not queued. Role cannot create this session",
+  );
+  expect(state.scribeRequests).toHaveLength(1);
+});
+
+test("staff can add only an internal staff note", async ({ page }) => {
+  const state = await installPatientMocks(page, "staff");
+  await page.goto("/sign-in");
+  await page.getByLabel("Email").fill("staff.a@nightingale.local");
+  await page.locator('input[autocomplete="current-password"]').fill("SyntheticPassword123!");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.getByRole("link", { name: /Parker Patient/ }).click();
+
+  await page.getByRole("button", { name: "Add update" }).click();
+  await expect(page.getByLabel("Update type")).toHaveValue("staff_note");
+  await expect(page.getByLabel("Update type").locator('option[value="patient_summary"]')).toHaveCount(0);
+  await page.getByRole("textbox", { name: "Note", exact: true }).fill("Synthetic staff coordination note.");
+  await page.getByRole("button", { name: "Save update" }).click();
+
+  await expect(page.getByText("Synthetic staff coordination note.")).toBeVisible();
+  expect(state.entryRequests).toHaveLength(1);
+  expect(state.entryRequests[0]).toMatchObject({
+    patient_id: PATIENT_ID,
+    entry_type: "staff_note",
+    visibility: "internal",
+  });
 });

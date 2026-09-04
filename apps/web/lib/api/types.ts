@@ -169,6 +169,7 @@ export type ScribeJob = {
   attempt_count: number;
   queue_position: number | null;
   output_entry_id: string | null;
+  safe_error_code: string | null;
   provider_name: string | null;
   model_name: string | null;
   created_at: string;
@@ -180,6 +181,21 @@ export type ScribeJobEvent = {
   job_id: string;
   event_kind: "generating" | "validating" | "persisting" | "completed" | "retrying" | "cancelled";
   created_at: string;
+};
+
+export type PatientScribeJob = {
+  id: string;
+  status: "queued" | "processing" | "succeeded" | "failed" | "dead_letter" | "cancelled";
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+  safe_error_code: string | null;
+};
+
+export type PatientAiSessionResponse = {
+  entry: PatientSafeEntry;
+  job: PatientScribeJob;
+  message: string;
 };
 
 export type ProviderUsage = {

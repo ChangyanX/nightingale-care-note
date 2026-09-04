@@ -395,6 +395,12 @@ class SymptomLogRequest(BaseModel):
 
 class PatientAiQuestionRequest(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
+    idempotency_key: str | None = Field(
+        default=None,
+        min_length=8,
+        max_length=200,
+        pattern=r"^[A-Za-z0-9._:-]+$",
+    )
 
 
 class PatientPortalEntryResponse(BaseModel):
@@ -439,6 +445,12 @@ class CreateScribeJobRequest(BaseModel):
     idempotency_key: str = Field(min_length=8, max_length=200, pattern=r"^[A-Za-z0-9._:-]+$")
 
 
+class CreateLiveScribeSessionRequest(BaseModel):
+    interaction_type: Literal["doctor_consult", "nurse_consult"]
+    transcript: str = Field(min_length=20, max_length=12_000)
+    idempotency_key: str = Field(min_length=8, max_length=200, pattern=r"^[A-Za-z0-9._:-]+$")
+
+
 class ScribeJobResponse(BaseModel):
     id: UUID
     clinic_id: UUID
@@ -473,6 +485,21 @@ class ScribeJobEventResponse(BaseModel):
         "generating", "validating", "persisting", "completed", "retrying", "cancelled"
     ]
     created_at: datetime
+
+
+class PatientScribeJobResponse(BaseModel):
+    id: UUID
+    status: AiJobStatus
+    created_at: datetime
+    updated_at: datetime
+    completed_at: datetime | None
+    safe_error_code: str | None
+
+
+class PatientAiSessionResponse(BaseModel):
+    entry: PatientSafeEntryResponse
+    job: PatientScribeJobResponse
+    message: str
 
 
 class ProviderUsageResponse(BaseModel):

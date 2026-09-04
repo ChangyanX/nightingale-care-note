@@ -1,3 +1,4 @@
+import unicodedata
 from typing import Annotated
 from uuid import UUID
 
@@ -9,6 +10,7 @@ from app.domain.prioritization.personalization import topic_embedding
 from app.gateway import SupabaseGateway
 from app.infrastructure.llm.usage import aggregate_usage
 from app.schemas import (
+    CreateLiveScribeSessionRequest,
     CreateScribeJobRequest,
     ImportanceFeedbackRequest,
     ImportancePreferenceResponse,
@@ -31,6 +33,32 @@ _JOB_SELECT = (
     "safe_error_code,output_entry_id,created_at,updated_at,provider_name,model_name,input_tokens,"
     "output_tokens,estimated_cost_usd"
 )
+
+
+@router.post(
+    "/patients/{patient_id}/scribe-sessions",
+    response_model=ScribeJobResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    tags=["AI scribe jobs"],
+)
+async def create_live_scribe_session(
+    patient_id: UUID,
+    request: CreateLiveScribeSessionRequest,
+    auth: AuthDependency,
+    settings: SettingsDependency,
+) -> ScribeJobResponse:
+    """Create the role-owned source entry and its durable AI job atomically."""
+    row = await gateway(settings).rpc(
+        "create_clinical_scribe_session",
+        auth.access_token,
+        {
+            "p_patient_id": str(patient_id),
+            "p_interaction_type": request.interaction_type,
+            "p_content": unicodedata.normalize("NFC", request.transcript.strip()),
+            "p_idempotency_key": request.idempotency_key,
+        },
+    )
+    return ScribeJobResponse.model_validate(row)
 
 
 @router.post(

@@ -1,6 +1,7 @@
 import unicodedata
 from datetime import date
 from typing import Annotated, Any
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -12,11 +13,13 @@ from app.schemas import (
     AppointmentRequestResponse,
     CreateAppointmentRequest,
     PatientAiQuestionRequest,
+    PatientAiSessionResponse,
     PatientDashboardResponse,
     PatientObservationResponse,
     PatientPortalEntryResponse,
     PatientReportResponse,
     PatientSafeEntryResponse,
+    PatientScribeJobResponse,
     PatientVisibleTaskResponse,
     SymptomLogRequest,
 )
@@ -209,7 +212,7 @@ async def log_symptoms(
 
 @router.post(
     "/patient/ai-question",
-    response_model=PatientPortalEntryResponse,
+    response_model=PatientAiSessionResponse,
     status_code=status.HTTP_201_CREATED,
     tags=["patient portal"],
 )
@@ -217,17 +220,17 @@ async def record_ai_question(
     request: PatientAiQuestionRequest,
     auth: AuthDependency,
     settings: SettingsDependency,
-) -> PatientPortalEntryResponse:
+) -> PatientAiSessionResponse:
     client = gateway(settings)
     patient = await _own_patient(auth, client)
     question = unicodedata.normalize("NFC", request.question.strip())
     verified = redact_for_llm(question, known_names=(str(patient["display_name"]),))
-    row = await client.rpc(
-        "create_patient_portal_entry",
+    result = await client.rpc(
+        "submit_patient_ai_session",
         auth.access_token,
         {
-            "p_kind": "ai_question",
             "p_content": f"Patient question for care team: {question}",
+            "p_idempotency_key": request.idempotency_key or f"patient-session:{uuid4()}",
             "p_structured": {
                 "redaction_verified": verified.verified,
                 "redaction_counts": verified.safe_metadata(),
@@ -235,10 +238,31 @@ async def record_ai_question(
             },
         },
     )
-    return PatientPortalEntryResponse(
-        entry=PatientSafeEntryResponse.model_validate(row),
+    return PatientAiSessionResponse(
+        entry=PatientSafeEntryResponse.model_validate(result["entry"]),
+        job=PatientScribeJobResponse.model_validate(result["job"]),
         message=(
-            "This non-emergency prototype recorded your question for the care team. "
-            "It does not provide a diagnosis."
+            "Your question was recorded and AI generation was queued for your care team. "
+            "The generated clinical summary remains internal and is not a diagnosis."
         ),
     )
+
+
+@router.get(
+    "/patient/ai-jobs",
+    response_model=list[PatientScribeJobResponse],
+    tags=["patient portal"],
+)
+async def list_own_ai_jobs(
+    auth: AuthDependency,
+    settings: SettingsDependency,
+) -> list[PatientScribeJobResponse]:
+    """Return status-only records without restricted source or output identifiers."""
+    value = await gateway(settings).rpc_value(
+        "list_own_patient_ai_jobs",
+        auth.access_token,
+        {},
+    )
+    if not isinstance(value, list):
+        raise HTTPException(status_code=502, detail="AI generation status is unavailable")
+    return [PatientScribeJobResponse.model_validate(item) for item in value]

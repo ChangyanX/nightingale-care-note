@@ -1,7 +1,7 @@
 PNPM ?= pnpm
 UV ?= uv
 
-.PHONY: install dev-web dev-api test test-api lint typecheck generate-api db-start db-stop db-reset seed-hosted smoke-llm benchmark-glance release-status release-check
+.PHONY: install dev-web dev-api dev-worker worker-once test test-api lint typecheck generate-api db-start db-stop db-reset seed-hosted smoke-llm benchmark-glance release-status release-check
 
 install:
 	$(PNPM) install
@@ -12,6 +12,12 @@ dev-web:
 
 dev-api:
 	cd services/backend && $(UV) run uvicorn app.main:app --reload --port 8000
+
+dev-worker:
+	cd services/backend && $(UV) run python -m scripts.run_scribe_worker
+
+worker-once:
+	cd services/backend && $(UV) run python -m scripts.run_scribe_worker --once
 
 test: test-api typecheck
 

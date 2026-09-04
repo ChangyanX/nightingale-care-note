@@ -145,14 +145,27 @@ class PortalGateway:
     async def rpc(
         self, function_name: str, access_token: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
-        assert function_name == "create_patient_portal_entry"
         assert access_token == "patient-token"
         self.rpc_payload = payload
-        return {
+        entry = {
             "id": "70000000-0000-0000-0000-000000000010",
             "entry_type": "patient_insight",
             "content": payload["p_content"],
             "occurred_at": "2026-08-28T12:00:00+08:00",
+        }
+        if function_name == "create_patient_portal_entry":
+            return entry
+        assert function_name == "submit_patient_ai_session"
+        return {
+            "entry": entry,
+            "job": {
+                "id": "d0000000-0000-0000-0000-000000000004",
+                "status": "queued",
+                "created_at": "2026-08-28T12:00:00+08:00",
+                "updated_at": "2026-08-28T12:00:00+08:00",
+                "completed_at": None,
+                "safe_error_code": None,
+            },
         }
 
 
@@ -236,11 +249,48 @@ async def test_patient_question_runs_redaction_verification_before_recording(
         )
 
     assert response.status_code == 201
-    assert "does not provide a diagnosis" in response.json()["message"]
+    assert "not a diagnosis" in response.json()["message"]
+    assert response.json()["job"]["status"] == "queued"
     metadata = fake.rpc_payload["p_structured"]  # type: ignore[index]
     assert metadata["redaction_verified"] is True
     assert metadata["redaction_counts"]["phone"] == 1
     assert metadata["redaction_counts"]["identity_number"] >= 1
+
+
+@pytest.mark.asyncio
+async def test_patient_ai_status_excludes_restricted_provenance(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class PatientStatusGateway:
+        async def rpc_value(
+            self, function_name: str, access_token: str, payload: dict[str, Any]
+        ) -> list[dict[str, Any]]:
+            assert function_name == "list_own_patient_ai_jobs"
+            assert access_token == "patient-token"
+            assert payload == {}
+            return [
+                {
+                    "id": "d0000000-0000-0000-0000-000000000004",
+                    "status": "succeeded",
+                    "created_at": "2026-08-28T12:00:00+08:00",
+                    "updated_at": "2026-08-28T12:00:04+08:00",
+                    "completed_at": "2026-08-28T12:00:04+08:00",
+                    "safe_error_code": None,
+                }
+            ]
+
+    monkeypatch.setattr(patient_portal, "gateway", lambda settings: PatientStatusGateway())
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.get("/patient/ai-jobs")
+
+    assert response.status_code == 200
+    serialized = response.text
+    assert response.json()[0]["status"] == "succeeded"
+    assert "source_record_id" not in serialized
+    assert "output_entry_id" not in serialized
+    assert "provider_name" not in serialized
 
 
 class AccountGateway:

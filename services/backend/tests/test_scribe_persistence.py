@@ -1,14 +1,22 @@
 import json
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 
 import httpx
 import pytest
 from pglast import parse_sql
 
-from app.domain.scribe import ScribeOutput, prepare_scribe_persistence
+from app.domain.scribe import ScribeInteractionType, ScribeOutput, prepare_scribe_persistence
 from app.infrastructure.llm import FakeScribeProvider
-from app.worker import ScribeJob, ScribeWorker, SourceDocument, SupabaseWorkerBackend
+from app.worker import (
+    ScribeJob,
+    ScribeWorker,
+    SourceDocument,
+    SupabaseSourceDocumentLoader,
+    SupabaseWorkerBackend,
+    WorkerBackendError,
+)
 from app.worker.config import WorkerSettings
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
@@ -81,6 +89,129 @@ class SyntheticSourceLoader:
             "Parker Patient says the cough is still waking me at night.",
             known_names=("Parker Patient",),
         )
+
+
+@pytest.mark.asyncio
+async def test_worker_reports_database_authorization_failure_without_response_body() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path.endswith("/rpc/claim_ai_scribe_job")
+        return httpx.Response(
+            403,
+            json={"message": "permission denied for table ai_jobs", "secret": "not surfaced"},
+        )
+
+    settings = WorkerSettings(
+        supabase_url="http://supabase.test",
+        supabase_service_role_key="synthetic-service-role-key",
+    )
+    backend = SupabaseWorkerBackend(
+        settings,
+        SyntheticSourceLoader(),
+        transport=httpx.MockTransport(handler),
+    )
+
+    with pytest.raises(WorkerBackendError) as captured:
+        await backend.claim()
+
+    assert captured.value.code == "worker_database_authorization_failed"
+    assert captured.value.retryable is False
+    assert "permission denied" not in str(captured.value)
+
+
+@pytest.mark.asyncio
+async def test_worker_treats_all_null_composite_claim_as_empty_queue() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path.endswith("/rpc/claim_ai_scribe_job")
+        return httpx.Response(
+            200,
+            json={
+                "id": None,
+                "clinic_id": None,
+                "patient_id": None,
+                "source_record_id": None,
+                "interaction_type": None,
+                "attempt_count": None,
+                "max_attempts": None,
+            },
+        )
+
+    settings = WorkerSettings(
+        supabase_url="http://supabase.test",
+        supabase_service_role_key="synthetic-service-role-key",
+    )
+    backend = SupabaseWorkerBackend(
+        settings,
+        SyntheticSourceLoader(),
+        transport=httpx.MockTransport(handler),
+    )
+
+    assert await backend.claim() is None
+
+
+@pytest.mark.asyncio
+async def test_production_source_loader_reads_only_role_authored_source_text() -> None:
+    requested_tables: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.headers["apikey"] == "synthetic-service-role-key"
+        requested_tables.append(request.url.path)
+        if request.url.path.endswith("/source_records"):
+            return httpx.Response(
+                200,
+                json=[
+                    {
+                        "id": SOURCE_ID,
+                        "clinic_id": CLINIC_ID,
+                        "patient_id": PATIENT_ID,
+                        "created_by": "20000000-0000-0000-0000-000000000003",
+                    }
+                ],
+            )
+        if request.url.path.endswith("/entries"):
+            assert request.url.params["author_role"] == "neq.system"
+            return httpx.Response(
+                200,
+                json=[
+                    {
+                        "id": "70000000-0000-0000-0000-000000000001",
+                        "content_plaintext": "Parker Patient reports improved breathing.",
+                        "author_role": "clinician",
+                        "created_at": "2026-08-28T12:00:00+08:00",
+                    }
+                ],
+            )
+        if request.url.path.endswith("/patients"):
+            return httpx.Response(200, json=[{"display_name": "Parker Patient"}])
+        if request.url.path.endswith("/profiles"):
+            return httpx.Response(
+                200,
+                json=[{"display_name": "Dr. Casey Clinician", "preferred_name": "Casey"}],
+            )
+        raise AssertionError(f"Unexpected source-loader request: {request.url.path}")
+
+    settings = WorkerSettings(
+        supabase_url="http://supabase.test",
+        supabase_service_role_key="synthetic-service-role-key",
+    )
+    loader = SupabaseSourceDocumentLoader(
+        settings,
+        transport=httpx.MockTransport(handler),
+    )
+    source = await loader.load(
+        ScribeJob(
+            id=UUID(JOB_ID),
+            clinic_id=UUID(CLINIC_ID),
+            patient_id=UUID(PATIENT_ID),
+            source_record_id=UUID(SOURCE_ID),
+            interaction_type=ScribeInteractionType.DOCTOR_CONSULT,
+            attempt_count=1,
+            max_attempts=3,
+        )
+    )
+
+    assert source.text == "Parker Patient reports improved breathing."
+    assert source.known_names == ("Parker Patient", "Dr. Casey Clinician", "Casey")
+    assert len(requested_tables) == 4
 
 
 @pytest.mark.asyncio

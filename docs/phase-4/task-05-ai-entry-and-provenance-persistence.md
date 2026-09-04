@@ -51,17 +51,24 @@ timeline entry linked to the originating source record.
 - `prepare_scribe_persistence(...)` produces deterministic NFC content and
   Unicode code-point offsets from the validated structured result. The
   database highlight trigger independently verifies every quote/span pair.
-- `SupabaseWorkerBackend.complete(...)` is the concrete service-role adapter
-  that sends only the validated persistence payload to the transaction RPC.
-  Source loading is injected separately and ordinary FastAPI requests never
-  receive the service-role credential.
+- `SupabaseSourceDocumentLoader` resolves the exact source record and loads only
+  linked, non-system entry text plus names required for deterministic redaction.
+  `SupabaseWorkerBackend.complete(...)` then sends only the validated
+  persistence payload to the transaction RPC. Both run in the separate worker;
+  ordinary FastAPI requests never receive the service-role credential.
+- `202608280006_live_scribe_sessions.sql` creates role-owned clinical or patient
+  sources and durable jobs atomically. Patients receive a separate status-only
+  projection without restricted source/output IDs.
 - `test_scribe_persistence.py` covers all three interaction mappings, SQL
   parsing and transaction ownership, exact offsets, service-role RPC wiring,
   and the complete worker-to-writer path using synthetic fixtures only.
 
-Local completion does not claim a genuine provider or hosted database run.
-Apply migration `202608280003` and run one synthetic doctor-consult job in the
-target environment before recording final live evidence.
+Local genuine-provider completion is now evidenced: the durable job linked one
+system-authored output entry, one immutable initial version, and two exact-span
+suggested highlights. Migrations `202608280007` and `202608280008` grant the
+service-role worker only the table operations and row-lock privileges required
+by the invoker-security source/claim/completion path. Hosted repetition remains
+open.
 
 ## Done when
 

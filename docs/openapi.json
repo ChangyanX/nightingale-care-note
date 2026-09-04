@@ -904,6 +904,38 @@
         "title": "CreateEntryRequest",
         "type": "object"
       },
+      "CreateLiveScribeSessionRequest": {
+        "properties": {
+          "idempotency_key": {
+            "maxLength": 200,
+            "minLength": 8,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "interaction_type": {
+            "enum": [
+              "doctor_consult",
+              "nurse_consult"
+            ],
+            "title": "Interaction Type",
+            "type": "string"
+          },
+          "transcript": {
+            "maxLength": 12000,
+            "minLength": 20,
+            "title": "Transcript",
+            "type": "string"
+          }
+        },
+        "required": [
+          "interaction_type",
+          "transcript",
+          "idempotency_key"
+        ],
+        "title": "CreateLiveScribeSessionRequest",
+        "type": "object"
+      },
       "CreateScribeJobRequest": {
         "properties": {
           "idempotency_key": {
@@ -1629,6 +1661,20 @@
       },
       "PatientAiQuestionRequest": {
         "properties": {
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 8,
+                "pattern": "^[A-Za-z0-9._:-]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          },
           "question": {
             "maxLength": 2000,
             "minLength": 1,
@@ -1640,6 +1686,27 @@
           "question"
         ],
         "title": "PatientAiQuestionRequest",
+        "type": "object"
+      },
+      "PatientAiSessionResponse": {
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/PatientSafeEntryResponse"
+          },
+          "job": {
+            "$ref": "#/components/schemas/PatientScribeJobResponse"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "entry",
+          "job",
+          "message"
+        ],
+        "title": "PatientAiSessionResponse",
         "type": "object"
       },
       "PatientDashboardResponse": {
@@ -1907,6 +1974,70 @@
           "occurred_at"
         ],
         "title": "PatientSafeEntryResponse",
+        "type": "object"
+      },
+      "PatientScribeJobResponse": {
+        "properties": {
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "safe_error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Safe Error Code"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "processing",
+              "succeeded",
+              "failed",
+              "dead_letter",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "created_at",
+          "updated_at",
+          "completed_at",
+          "safe_error_code"
+        ],
+        "title": "PatientScribeJobResponse",
         "type": "object"
       },
       "PatientSummaryReviewRequest": {
@@ -4083,6 +4214,37 @@
         ]
       }
     },
+    "/patient/ai-jobs": {
+      "get": {
+        "description": "Return status-only records without restricted source or output identifiers.",
+        "operationId": "list_own_ai_jobs_patient_ai_jobs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PatientScribeJobResponse"
+                  },
+                  "title": "Response List Own Ai Jobs Patient Ai Jobs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Own Ai Jobs",
+        "tags": [
+          "patient portal"
+        ]
+      }
+    },
     "/patient/ai-question": {
       "post": {
         "operationId": "record_ai_question_patient_ai_question_post",
@@ -4101,7 +4263,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PatientPortalEntryResponse"
+                  "$ref": "#/components/schemas/PatientAiSessionResponse"
                 }
               }
             },
@@ -4897,6 +5059,65 @@
           }
         ],
         "summary": "Create Scribe Job",
+        "tags": [
+          "AI scribe jobs"
+        ]
+      }
+    },
+    "/patients/{patient_id}/scribe-sessions": {
+      "post": {
+        "description": "Create the role-owned source entry and its durable AI job atomically.",
+        "operationId": "create_live_scribe_session_patients__patient_id__scribe_sessions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "patient_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Patient Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLiveScribeSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScribeJobResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Live Scribe Session",
         "tags": [
           "AI scribe jobs"
         ]

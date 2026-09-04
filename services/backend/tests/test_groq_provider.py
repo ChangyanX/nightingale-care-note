@@ -35,6 +35,12 @@ async def test_groq_request_contains_only_redacted_text_and_strict_schema() -> N
         assert response_format["json_schema"]["strict"] is True
         schema = response_format["json_schema"]["schema"]
         assert set(schema["required"]) == set(schema["properties"])
+        medication = schema["$defs"]["MedicationDetail"]
+        assert set(medication["required"]) == set(medication["properties"])
+        assert all(
+            "default" not in property_schema
+            for property_schema in medication["properties"].values()
+        )
         return httpx.Response(
             200,
             headers={"x-request-id": "groq-request-1"},

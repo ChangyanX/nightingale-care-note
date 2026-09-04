@@ -79,6 +79,40 @@ def override_auth() -> None:
 
 
 @pytest.mark.asyncio
+async def test_live_clinical_session_atomically_creates_source_and_job(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake = ScribeJobGateway()
+    monkeypatch.setattr(scribe_jobs, "gateway", lambda settings: fake)
+
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.post(
+            f"/patients/{PATIENT_ID}/scribe-sessions",
+            json={
+                "interaction_type": "doctor_consult",
+                "transcript": "  Synthetic doctor consult with stable breathing and follow-up.  ",
+                "idempotency_key": "live-doctor-20260828",
+            },
+        )
+
+    assert response.status_code == 202
+    assert response.json()["status"] == "queued"
+    assert fake.rpc_calls == [
+        (
+            "create_clinical_scribe_session",
+            {
+                "p_patient_id": PATIENT_ID,
+                "p_interaction_type": "doctor_consult",
+                "p_content": "Synthetic doctor consult with stable breathing and follow-up.",
+                "p_idempotency_key": "live-doctor-20260828",
+            },
+        )
+    ]
+
+
+@pytest.mark.asyncio
 async def test_submit_scribe_job_uses_idempotent_rpc(monkeypatch: pytest.MonkeyPatch) -> None:
     fake = ScribeJobGateway()
     monkeypatch.setattr(scribe_jobs, "gateway", lambda settings: fake)

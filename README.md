@@ -7,7 +7,7 @@ A provenance-first longitudinal Care Note for role-based clinical collaboration,
 ## Architecture
 
 - `apps/web`: Next.js and TypeScript frontend
-- `services/backend`: FastAPI orchestration API and later background worker
+- `services/backend`: FastAPI orchestration API and durable AI-scribe worker
 - `supabase`: PostgreSQL migrations, Row-Level Security policies, and synthetic seed data
 - `packages/design-tokens`: shared web design tokens
 - `containers` and `.devcontainer`: reproducible container/development environments
@@ -43,6 +43,8 @@ make db-start
 make db-reset
 make dev-api
 make dev-web
+# After configuring the worker-only service-role and LLM keys:
+make dev-worker
 ```
 
 If `pnpm exec supabase status -o env` reports values different from the
@@ -92,13 +94,21 @@ explicit project-reference check; see the hosted section of
 
 ## Inspect the running system
 
-Run the database, API, and web application in separate terminals:
+Run the database, API, worker, and web application in separate terminals:
 
 ```bash
 make db-start
 make dev-api
 make dev-web
+# In the fourth terminal after configuring worker-only secrets:
+make dev-worker
 ```
+
+For local development, obtain the disposable service-role value from
+`pnpm exec supabase status -o env` and place it only in the ignored root `.env`
+as `SUPABASE_SERVICE_ROLE_KEY`; never copy the command output into Git or a
+shared message. Add the Groq key there as `LLM_API_KEY`. Hosted deployments use
+their secret store rather than committed files.
 
 | Surface | Local address | Purpose |
 |---|---|---|
@@ -127,8 +137,9 @@ mutation endpoints require a short-lived Supabase user access token:
    adds the `Bearer` prefix.
 4. Execute `/me` first to verify the identity and clinic memberships, then test
    `/patients` and the patient-specific endpoints. Phase 4 job submission/status
-   operations appear under Swagger's **AI scribe jobs** tag; they enqueue work
-   and never accept or return a raw transcript.
+   operations appear under Swagger's **AI scribe jobs** tag. The live-session
+   endpoint accepts synthetic interaction text and returns sanitized job status;
+   status endpoints never return a transcript or provider response.
 
 For the disposable local stack only, request a token directly from Supabase
 Auth using the local publishable key printed by `pnpm exec supabase status`:
@@ -286,6 +297,44 @@ For a fully local second adapter, set `LLM_PROVIDER=ollama`, point
 `LLM_BASE_URL` at the loopback Ollama OpenAI-compatible endpoint, and choose a
 locally installed model. Provider facts and runtime evidence are documented in
 [Provider latency and cost](docs/provider-latency-and-cost.md).
+
+### Complete live AI timeline flow
+
+Apply migrations through `202608280008`, configure the worker-only
+`SUPABASE_SERVICE_ROLE_KEY` and `LLM_API_KEY`, and keep `make dev-worker`
+running alongside the API and web app. The worker command continuously claims
+durable jobs; `make worker-once` processes at most one queued job for debugging.
+
+- A clinician opens a patient, selects **Generate AI summary**, enters or loads
+  a synthetic doctor-consult example, and submits. Staff have the equivalent
+  nurse-consult path. The source note and job are created atomically.
+- A patient uses **Chat with AI** to submit a non-emergency question. The
+  patient sees only queued/processing/completed status; the generated raw AI
+  summary remains internal and appears live in authorized clinic timelines.
+- Admins can monitor job status and generated timeline entries but remain
+  read-only and cannot trigger clinical generation.
+- Realtime invalidation refreshes clinic timelines when the worker persists the
+  system-authored entry, version, highlights, audit metadata, and completed job
+  link in one database transaction.
+
+See [Live AI timeline flow](docs/live-ai-timeline-flow.md) for the process,
+privacy boundary, failure behavior, and two-session demo steps.
+
+If jobs remain queued, confirm `make dev-worker` is running. The status panel
+polls active jobs every two seconds and also subscribes to `ai_jobs` and
+`ai_job_events`; it shows the safe failure code when a job stops. A local 403
+from `claim_ai_scribe_job` or `complete_ai_scribe_job` means the worker grant
+migrations through `202608280008` have not been applied—run
+`pnpm exec supabase db push --local`, then restart the worker.
+
+If the UI says a job was **not queued**, first confirm `make dev-api` is running
+and inspect the sanitized reason shown beside the generator. Authorization or
+validation errors come from the API; a connection failure means the browser
+could not confirm the response from `NEXT_PUBLIC_API_URL`. Retrying the
+unchanged form reuses the same idempotency key, so even if the server accepted
+an interrupted request it cannot create a duplicate job. Once a job appears in
+the status panel, use `make worker-once` or `make dev-worker` to diagnose
+processing separately.
 
 ## Security boundaries
 

@@ -1,4 +1,8 @@
-from app.worker.backend import SourceDocumentLoader, SupabaseWorkerBackend
+from app.worker.backend import (
+    SourceDocumentLoader,
+    SupabaseSourceDocumentLoader,
+    SupabaseWorkerBackend,
+)
 from app.worker.scribe import (
     ScribeJob,
     ScribeWorker,
@@ -12,6 +16,7 @@ __all__ = [
     "ScribeWorker",
     "SourceDocument",
     "SourceDocumentLoader",
+    "SupabaseSourceDocumentLoader",
     "SupabaseWorkerBackend",
     "WorkerBackend",
     "WorkerBackendError",
